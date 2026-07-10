@@ -1,0 +1,51 @@
+# УМОВИ УКЛАДЕННЯ ШЛЮБУ (ст. 22, 24, 25, 26)
+
+## Стаття 22. Шлюбний вік
+1. Шлюбний вік для чоловіків та жінок встановлюється у вісімнадцять років.
+
+## Стаття 24. Добровільність шлюбу
+1. Шлюб ґрунтується на вільній згоді жінки та чоловіка. Примушування до шлюбу не допускається.
+
+## Стаття 25. Одношлюбність
+1. Жінка та чоловік можуть одночасно перебувати лише в одному шлюбі. Вони мають право на повторний шлюб лише після припинення попереднього шлюбу.
+
+## Стаття 26. Особи, які не можуть перебувати у шлюбі між собою
+1. У шлюбі між собою не можуть перебувати родичі по прямій лінії споріднення, повнорідні та неповнорідні брат і сестра, двоюрідні брат і сестра, тітка/дядько та племінник/племінниця тощо.
+
+```catala
+# Перевірка умов укладення шлюбу (ст. 22, 24, 25, 26)
+declaration structure PartyDetails:
+  data age content integer
+  data voluntary_consent content boolean
+  data is_already_married content boolean
+  data blood_relationship_with_partner content boolean
+
+declaration scope MarriageEligibilityCheck:
+  input party_1 content PartyDetails
+  input party_2 content PartyDetails
+  output is_marriage_possible content boolean
+
+scope MarriageEligibilityCheck:
+  # Вік має бути не менше 18 років (ст. 22)
+  let age_criteria_met =
+    party_1.age >= 18 and party_2.age >= 18
+
+  # Вільна згода обох сторін (ст. 24)
+  let consent_criteria_met =
+    party_1.voluntary_consent and party_2.voluntary_consent
+
+  # Сторони не мають перебувати у чинних шлюбах (ст. 25)
+  let single_marriage_met =
+    not party_1.is_already_married and not party_2.is_already_married
+
+  # Сторони не є родичами (ст. 26)
+  let no_blood_relationship =
+    not party_1.blood_relationship_with_partner and not party_2.blood_relationship_with_partner
+
+  # Загальна перевірка можливості шлюбу
+  definition is_marriage_possible =
+    age_criteria_met and
+    consent_criteria_met and
+    single_marriage_met and
+    no_blood_relationship
+```

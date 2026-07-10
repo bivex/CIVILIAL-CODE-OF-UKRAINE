@@ -1,0 +1,77 @@
+# РОЗРАХУНОК АЛІМЕНТІВ НА ДИТИНУ (ст. 182, 183, 184)
+
+## Стаття 182. Обставини, які враховуються при визначенні аліментів
+2. Мінімальний гарантований розмір аліментів на одну дитину не може бути меншим, ніж 50 відсотків прожиткового мінімуму для дитини відповідного віку.
+   Мінімальний рекомендований розмір становить 1 прожитковий мінімум для дитини відповідного віку (присуджується при достатності заробітку платника).
+
+## Стаття 183. Визначення розміру аліментів у частці від заробітку
+5. Стягнення аліментів через судовий наказ здійснюється у розмірі:
+   - на 1 дитину — 1/4 (25%) заробітку;
+   - на 2 дітей — 1/3 (33%) заробітку;
+   - на 3 і більше дітей — 1/2 (50%) заробітку,
+   *але не більше десяти прожиткових мінімумів на дитину відповідного віку.*
+
+## Стаття 184. Визначення аліментів у твердій грошовій сумі
+1. Суд за заявою одержувача визначає розмір аліментів у твердій грошовій сумі.
+
+```catala
+# Перевірка та розрахунок розміру аліментів на утримання дітей (ст. 182-184)
+declaration structure AlimonyCalculationDetails:
+  # Дані дитини
+  data children_count content integer
+  data living_wage_per_child content money
+  
+  # Дані платника
+  data monthly_income content money
+  data parent_sufficient_income content boolean
+  
+  # Спосіб стягнення
+  data use_fixed_money_amount content boolean
+  data fixed_money_amount content money
+
+declaration scope AlimonyCheck:
+  input info content AlimonyCalculationDetails
+  output base_alimony_rate content decimal
+  output calculated_alimony_amount content money
+  output minimum_guaranteed_amount content money
+  output maximum_allowed_amount content money
+  output final_alimony_amount content money
+
+scope AlimonyCheck:
+  # Мінімальний гарантований розмір: 50% прожиткового мінімуму на кожну дитину (ч. 2 ст. 182)
+  definition minimum_guaranteed_amount =
+    info.living_wage_per_child * 0.5 * info.children_count
+
+  # Максимальний ліміт стягнення: 10 прожиткових мінімумів на дитину (ч. 5 ст. 183)
+  definition maximum_allowed_amount =
+    info.living_wage_per_child * 10.0 * info.children_count
+
+  # Частка доходу залежно від кількості дітей (ч. 5 ст. 183)
+  definition base_alimony_rate =
+    if info.children_count = 1 then
+      0.25
+    else if info.children_count = 2 then
+      0.33
+    else
+      0.50
+
+  # Розрахунок базової суми
+  definition calculated_alimony_amount =
+    if info.use_fixed_money_amount then
+      info.fixed_money_amount
+    else
+      info.monthly_income * base_alimony_rate
+
+  # Кінцевий розмір аліментів з урахуванням лімітів
+  definition final_alimony_amount =
+    let base_amount =
+      if calculated_alimony_amount < minimum_guaranteed_amount then
+        minimum_guaranteed_amount
+      else
+        calculated_alimony_amount
+    in
+    if base_amount > maximum_allowed_amount then
+      maximum_allowed_amount
+    else
+      base_amount
+```

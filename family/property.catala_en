@@ -1,0 +1,54 @@
+# ПОДІЛ СПІЛЬНОГО МАЙНА ПОДРУЖЖЯ (ст. 60, 70)
+
+## Стаття 60. Підстави виникнення права спільної сумісної власності подружжя
+1. Майно, набуте подружжям за час шлюбу, належить дружині та чоловікові на праві спільної сумісної власності незалежно від того, що один з них не мав з поважної причини самостійного заробітку.
+
+## Стаття 70. Розмір часток майна дружини та чоловіка при поділі
+1. У разі поділу майна, що є об’єктом права спільної сумісної власності подружжя, частки майна дружини та чоловіка є рівними, якщо інше не визначено домовленістю між ними або шлюбним договором.
+2. При вирішенні спору про поділ майна суд може відступити від засади рівності часток подружжя за обставин, що мають істотне значення, зокрема якщо один із них не дбав про матеріальне забезпечення сім’ї, приховав, знищив чи пошкодив спільне майно, витрачав його на шкоду інтересам сім’ї.
+3. За рішенням суду частка майна дружини, чоловіка може бути збільшена, якщо з нею, ним проживають діти, за умови, що розмір аліментів, які вони одержують, недостатній для забезпечення їхнього гармонійного розвитку.
+
+```catala
+# Розрахунок часток при поділі майна (ст. 70)
+declaration structure PropertyDivisionDetails:
+  data joint_property_value content money
+  # Обставини для відступу від рівності часток (ч. 2, 3)
+  data spouse_evaded_supporting_family content boolean
+  data spouse_damaged_joint_property content boolean
+  data children_reside_with_spouse content boolean
+  data alimony_for_children_insufficient content boolean
+  data court_deviates_from_equality content boolean
+  data custom_share_rate content decimal
+
+declaration scope PropertyDivisionCheck:
+  input info content PropertyDivisionDetails
+  output share_rate_spouse_1 content decimal
+  output share_rate_spouse_2 content decimal
+  output value_spouse_1 content money
+  output value_spouse_2 content money
+
+scope PropertyDivisionCheck:
+  # 1. Загальне правило: частки є рівними (ч. 1 ст. 70)
+  definition share_rate_spouse_1 = 0.5
+  definition share_rate_spouse_2 = 0.5
+
+  # 2. Виняток: Суд збільшує частку одного з подружжя при порушеннях або проживанні з дітьми (ч. 2, 3)
+  exception definition share_rate_spouse_1 = info.custom_share_rate
+    under condition
+      info.court_deviates_from_equality and
+      (info.spouse_evaded_supporting_family or
+       info.spouse_damaged_joint_property or
+       (info.children_reside_with_spouse and info.alimony_for_children_insufficient))
+    consequence equals info.custom_share_rate
+
+  exception definition share_rate_spouse_2 = 1.0 - share_rate_spouse_1
+    under condition
+      info.court_deviates_from_equality and
+      (info.spouse_evaded_supporting_family or
+       info.spouse_damaged_joint_property or
+       (info.children_reside_with_spouse and info.alimony_for_children_insufficient))
+    consequence equals 1.0 - share_rate_spouse_1
+
+  definition value_spouse_1 = info.joint_property_value * share_rate_spouse_1
+  definition value_spouse_2 = info.joint_property_value * share_rate_spouse_2
+```
