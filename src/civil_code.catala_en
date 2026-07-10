@@ -1,0 +1,10 @@
+# CIVIL CODE OF UKRAINE
+
+This is the entrypoint file that aggregates the translated sections of the Civil Code of Ukraine.
+
+> Include: book_1/book_1_main.catala_en
+> Include: book_2/book_2_main.catala_en
+> Include: book_3/book_3_main.catala_en
+> Include: book_4/book_4_main.catala_en
+> Include: book_5/book_5_main.catala_en
+> Include: book_6/book_6_main.catala_en

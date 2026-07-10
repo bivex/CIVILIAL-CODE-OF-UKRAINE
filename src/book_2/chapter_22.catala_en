@@ -1,0 +1,99 @@
+# Глава 22. ОСОБИСТІ НЕМАЙНОВІ ПРАВА, ЩО ЗАБЕЗПЕЧУЮТЬ СОЦІАЛЬНЕ БУТТЯ ФІЗИЧНОЇ ОСОБИ
+
+## Стаття 294. Право на ім'я
+
+1. Фізична особа має право на ім'я.
+2. Фізична особа має право на транскрибований запис її прізвища та імені відповідно до своєї національної традиції.
+
+---
+
+## Стаття 295. Право на зміну імені
+
+1. Фізична особа, яка досягла шістнадцяти років, має право на власний розсуд змінити своє прізвище та (або) власне ім’я, та (або) по батькові.
+2. Фізична особа, яка досягла чотирнадцяти років, має право змінити своє прізвище та (або) власне ім’я, та (або) по батькові за згодою батьків (або піклувальника).
+3. Фізична особа, яка досягла чотирнадцяти років, має право змінити своє ім'я за згодою одного з батьків, якщо другий з батьків помер, визнаний безвісно відсутнім, оголошений померлим, визнаний обмежено дієздатним, недієздатним, позбавлений батьківських прав або відомості виключені.
+   У разі заперечення одного з батьків щодо зміни по батькові дитини спір може вирішуватися органом опіки та піклування або судом.
+6. Підставами для відмови у зміні імені є:
+   * здійснення стосовно заявника кримінального провадження або його перебування під адміністративним наглядом;
+   * наявність у заявника судимості, яку не погашено або не знято;
+   * офіційне звернення правоохоронних органів іноземних держав про розшук;
+   * подання заявником неправдивих відомостей про себе.
+
+```catala
+# Характеристики заявника на зміну імені
+declaration structure NameChangeApplicant:
+  data age content integer
+  data has_parental_consent content boolean
+  data has_custodian_consent content boolean
+  data has_consent_of_at_least_one_parent content boolean
+  data other_parent_deceased_or_deprived content boolean
+  data dispute_resolved_by_authority content boolean
+  
+  # Обставини відмови (ч. 6)
+  data under_criminal_prosecution content boolean
+  data under_administrative_supervision content boolean
+  data has_unspent_conviction content boolean
+  data wanted_by_foreign_police content boolean
+  data provided_false_information content boolean
+
+declaration scope NameChangeEligibility:
+  input applicant content NameChangeApplicant
+  output can_change_name content boolean
+
+scope NameChangeEligibility:
+  # Загальні вікові правила (ч. 1, 2, 3)
+  definition can_change_name =
+    if applicant.age >= 16 then
+      true
+    else if applicant.age >= 14 then
+      applicant.has_parental_consent or
+      applicant.has_custodian_consent or
+      (applicant.has_consent_of_at_least_one_parent and applicant.other_parent_deceased_or_deprived) or
+      applicant.dispute_resolved_by_authority
+    else
+      false
+
+  # Безумовний виняток: підстави для відмови за ч. 6 (скасовують право на зміну)
+  exception definition can_change_name = false
+    under condition
+      applicant.under_criminal_prosecution or
+      applicant.under_administrative_supervision or
+      applicant.has_unspent_conviction or
+      applicant.wanted_by_foreign_police or
+      applicant.provided_false_information
+    consequence equals false
+```
+
+---
+
+## Стаття 296. Право на використання імені
+
+1. Фізична особа має право використовувати своє ім'я у всіх сферах своєї діяльності.
+2. Використання імені фізичної особи в літературних та інших творах як персонажа допускається лише за її згодою, а після її смерті - за згодою її дітей, вдови (вдівця), а якщо їх немає, - батьків, братів та сестер.
+
+```catala
+# Використання імені в літературних творах
+declaration structure UseOfNameRequest:
+  data is_documentary content boolean
+  data person_is_alive content boolean
+  data has_personal_consent content boolean
+  data has_spouse_or_children_consent content boolean
+  data has_parents_or_siblings_consent content boolean
+  data has_relatives_exist content boolean
+
+declaration scope UseOfNameLegality:
+  input request content UseOfNameRequest
+  output is_permitted content boolean
+
+scope UseOfNameLegality:
+  # У творах документального характеру згода не потрібна (ч. 2)
+  definition is_permitted =
+    if request.is_documentary then
+      true
+    else if request.person_is_alive then
+      request.has_personal_consent
+    else
+      # Після смерті - згода родичів за ієрархією (ч. 2)
+      request.has_spouse_or_children_consent or
+      (not request.has_relatives_exist and request.has_parents_or_siblings_consent)
+```

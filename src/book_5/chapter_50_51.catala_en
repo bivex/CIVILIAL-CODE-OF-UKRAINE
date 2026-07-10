@@ -1,0 +1,50 @@
+# Глава 50-51. ПРИПИНЕННЯ ЗОБОВ'ЯЗАННЯ ТА ВІДПОВІДАЛЬНІСТЬ ЗА ЙОГО ПОРУШЕННЯ
+
+## Глава 51. Відповідальність за порушення зобов'язання
+
+### Стаття 610. Поняття порушення зобов'язання
+1. Порушенням зобов'язання є його невиконання або виконання з порушенням умов, визначених змістом зобов'язання (неналежне виконання).
+
+### Стаття 625. Відповідальність за порушення грошового зобов'язання
+1. Боржник не звільняється від відповідальності за неможливість виконання ним грошового зобов'язання.
+2. Боржник, який прострочив виконання грошового зобов'язання, на вимогу кредитора зобов'язаний сплатити суму боргу з урахуванням встановленого індексу інфляції за весь час прострочення, а також три проценти річних від простроченої суми, якщо інший розмір процентів не встановлений договором або законом.
+
+```catala
+# Розрахунок заборгованості за ст. 625
+declaration structure DebtDelayInput:
+  data delayed_amount content money
+  data inflation_rate content decimal                    # наприклад, 1.05 при інфляції 5%
+  data days_of_delay content integer
+  data custom_interest_rate_agreed content boolean
+  data custom_interest_rate content decimal              # річна ставка відсотків
+
+declaration scope DelayChargesCalculation:
+  input info content DebtDelayInput
+  output inflation_compensation content money
+  output interest_compensation content money
+  output total_due content money
+
+scope DelayChargesCalculation:
+  # Розрахунок інфляційних втрат (сума з урахуванням індексу мінус базовий борг)
+  definition inflation_compensation =
+    let adjusted = info.delayed_amount * info.inflation_rate in
+    adjusted - info.delayed_amount
+
+  # Розрахунок річних (3% за замовчуванням або інша ставка за договором/законом) (ч. 2)
+  definition interest_compensation =
+    let rate =
+      if info.custom_interest_rate_agreed then
+        info.custom_interest_rate
+      else
+        3.0%
+    in
+    # Розрахунок відсотків пропорційно до кількості днів прострочення
+    # Для цього ділимо кількість днів прострочення на 365
+    let year_fraction = info.days_of_delay / 365 in
+    let interest_multiplier = rate * year_fraction in
+    info.delayed_amount * interest_multiplier
+
+  # Загальна сума до сплати
+  definition total_due =
+    info.delayed_amount + inflation_compensation + interest_compensation
+```

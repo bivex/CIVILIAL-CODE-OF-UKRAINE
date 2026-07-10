@@ -1,0 +1,35 @@
+# Глава 47-48. ЗАГАЛЬНІ ПОЛОЖЕННЯ ПРО ЗОБОВ'ЯЗАННЯ ТА ЇХ ВИКОНАННЯ
+
+## Глава 47. Поняття зобов'язання. Сторони у зобов'язанні
+
+### Стаття 509. Поняття зобов'язання та підстави його виникнення
+1. Зобов'язанням є правовідношення, в якому одна сторона (боржник) зобов'язана вчинити на користь другої сторони (кредитора) певну дію (передати майно, виконати роботу, надати послугу, сплатити гроші тощо) або утриматися від вчинення певної дії (негативне зобов’язання), а кредитор має право вимагати від боржника виконання його обов'язку.
+
+### Стаття 516. Порядок заміни кредитора у зобов'язанні
+1. Заміна кредитора у зобов'язанні здійснюється без згоди боржника, якщо інше не встановлено договором або законом.
+2. Якщо боржник не був письмово повідомлений про заміну кредитора у зобов'язанні, новий кредитор несе ризик настання несприятливих для нього наслідків. У цьому разі виконання боржником свого обов'язку первісному кредиторові є належним виконанням.
+
+```catala
+# Заміна кредитора (ст. 516)
+declaration structure CreditorReplacement:
+  data debtor_notified_in_writing content boolean
+  data debtor_consents content boolean
+  data consent_required_by_law_or_contract content boolean
+  data performed_to_original_creditor content boolean
+
+declaration scope ReplacementLegality:
+  input replacement content CreditorReplacement
+  output replacement_is_valid content boolean
+  output performance_is_proper content boolean
+
+scope ReplacementLegality:
+  # Заміна дійсна без згоди, якщо інше не встановлено законом/договором (ч. 1)
+  definition replacement_is_valid =
+    not replacement.consent_required_by_law_or_contract or
+    replacement.debtor_consents
+
+  # Виконання обов'язку старому кредитору вважається належним, якщо боржника не повідомили письмово (ч. 2)
+  definition performance_is_proper =
+    replacement.performed_to_original_creditor and
+    not replacement.debtor_notified_in_writing
+```

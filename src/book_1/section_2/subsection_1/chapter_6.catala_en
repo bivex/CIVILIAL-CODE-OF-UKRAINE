@@ -1,0 +1,64 @@
+# Глава 6. ОПІКА ТА ПІКЛУВАННЯ
+
+## Стаття 55. Завдання опіки та піклування
+
+1. Опіка та піклування встановлюються з метою забезпечення особистих немайнових і майнових прав та інтересів малолітніх, неповнолітніх осіб, а також повнолітніх осіб, які за станом здоров'я не можуть самостійно здійснювати свої права і виконувати обов'язки.
+
+---
+
+## Стаття 58. Фізичні особи, над якими встановлюється опіка
+
+1. Опіка встановлюється над малолітніми особами, які є сиротами або позбавлені батьківського піклування, та фізичними особами, які визнані недієздатними.
+
+---
+
+## Стаття 59. Фізичні особи, над якими встановлюється піклування
+
+1. Піклування встановлюється над неповнолітніми особами, які є сиротами або позбавлені батьківського піклування, та фізичними особами, цивільна дієздатність яких обмежена.
+
+---
+
+## Стаття 63. Призначення опікуна або піклувальника
+
+1. Опікуна або піклувальника призначає орган опіки та піклування, крім випадків, встановлених статтею 60 цього Кодексу (судом).
+2. Опікуном або піклувальником може бути лише фізична особа з повною цивільною дієздатністю.
+
+```catala
+# Типи піклувальної опіки
+declaration enumeration GuardianshipType:
+  -- Guardianship     # Опіка (для малолітніх або недієздатних)
+  -- Custody          # Піклування (для неповнолітніх або обмежено дієздатних)
+  -- None             # Не потребує
+
+# Фізична особа, що потребує захисту
+declaration structure NeedyPerson:
+  data age content integer
+  data is_orphan_or_deprived_of_care content boolean
+  data capacity content ActiveCapacity
+
+# Потенційний опікун/піклувальник
+declaration structure PotentialGuardian:
+  data capacity content ActiveCapacity
+
+declaration scope GuardianshipDetermination:
+  input person content NeedyPerson
+  input guardian content PotentialGuardian
+  output g_type content GuardianshipType
+  output is_guardian_eligible content boolean
+
+scope GuardianshipDetermination:
+  # Визначення типу опіки відповідно до ст. 58, 59
+  definition g_type =
+    if person.capacity = ActiveCapacity.None or 
+       (person.age < 14 and person.is_orphan_or_deprived_of_care) then
+      GuardianshipType.Guardianship
+    else if person.capacity = ActiveCapacity.Limited or
+            (person.age >= 14 and person.age < 18 and person.is_orphan_or_deprived_of_care) then
+      GuardianshipType.Custody
+    else
+      GuardianshipType.None
+
+  # Визначення придатності опікуна за ст. 63 (повинна бути повна дієздатність)
+  definition is_guardian_eligible =
+    guardian.capacity = ActiveCapacity.Full
+```

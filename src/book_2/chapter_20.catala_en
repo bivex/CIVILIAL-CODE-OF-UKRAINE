@@ -1,0 +1,44 @@
+# Глава 20. ЗАГАЛЬНІ ПОЛОЖЕННЯ ПРО ОСОБИСТІ НЕМАЙНОВІ ПРАВА ФІЗИЧНОЇ ОСОБИ
+
+## Стаття 269. Поняття особистого немайнового права
+
+1. Особисті немайнові права належать кожній фізичній особі від народження або за законом.
+2. Особисті немайнові права фізичної особи не мають економічного змісту.
+3. Особисті немайнові права тісно пов'язані з фізичною особою. Фізична особа не може відмовитися від особистих немайнових прав, а також не може бути позбавлена цих прав.
+4. Особистими немайновими правами фізична особа володіє довічно.
+
+---
+
+## Стаття 272. Здійснення особистих немайнових прав
+
+1. Фізична особа здійснює особисті немайнові права самостійно. В інтересах малолітніх, неповнолітніх, а також повнолітніх фізичних осіб, які за віком або за станом здоров'я не можуть самостійно здійснювати свої особисті немайнові права, їхні права здійснюють батьки (усиновлювачі), опікуни, піклувальники.
+
+---
+
+## Стаття 278. Неприпустимість обмеження особистих немайнових прав
+
+1. Правочини, що обмежують особисті немайнові права фізичної особи, є нікчемними (недійсними з моменту вчинення).
+
+```catala
+# Здійснення особистих немайнових прав та їх обмеження
+declaration structure NonPropertyRightExercise:
+  data is_minor content boolean
+  data cannot_exercise_due_to_health content boolean
+  data exercise_by_representative content boolean
+  data is_transaction_restricting_right content boolean
+
+declaration scope NonPropertyRightValidation:
+  input info content NonPropertyRightExercise
+  output can_be_exercised content boolean
+  output transaction_is_null_and_void content boolean
+
+scope NonPropertyRightValidation:
+  # Фізична особа здійснює права самостійно або через законних представників (ст. 272)
+  definition can_be_exercised =
+    (not info.is_minor and not info.cannot_exercise_due_to_health) or
+    info.exercise_by_representative
+
+  # Будь-які обмеження особистих немайнових прав є нікчемними (ст. 278)
+  definition transaction_is_null_and_void =
+    info.is_transaction_restricting_right
+```

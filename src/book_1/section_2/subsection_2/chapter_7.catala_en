@@ -1,0 +1,133 @@
+# Глава 7. ЗАГАЛЬНІ ПОЛОЖЕННЯ ПРО ЮРИДИЧНУ ОСОБУ
+
+## Стаття 80. Поняття юридичної особи
+
+1. Юридичною особою є організація, створена і зареєстрована у встановленому законом порядку.
+Юридична особа наділяється цивільною правоздатністю і дієздатністю, може бути позивачем та відповідачем у суді.
+
+---
+
+## Стаття 81. Види юридичних осіб
+
+1. Юридична особа може бути створена шляхом об'єднання осіб та (або) майна.
+2. Юридичні особи, залежно від порядку їх створення, поділяються на юридичних осіб приватного права та юридичних осіб публічного права.
+   * Юридична особа приватного права створюється на підставі установчих документів.
+   * Юридична особа публічного права створюється розпорядчим актом Президента України, органу державної влади, органу влади Автономної Республіки Крим або органу місцевого самоврядування.
+
+---
+
+## Стаття 83. Організаційно-правові форми юридичних осіб
+
+1. Юридичні особи можуть створюватися у формі товариств, установ та в інших формах, встановлених законом.
+2. Товариством є організація, створена шляхом об'єднання осіб (учасників), які мають право участі у цьому товаристві. Товариства поділяються на підприємницькі та непідприємницькі.
+3. Установою є організація, створена однією або кількома особами (засновниками), які не беруть участі в управлінні нею, шляхом об'єднання (виділення) їхнього майна для досягнення мети, визначеної засновниками, за рахунок цього майна.
+
+```catala
+# Типи та форми юридичних осіб
+declaration enumeration LegalPersonType:
+  -- PrivateLaw
+  -- PublicLaw
+
+declaration enumeration LegalPersonForm:
+  -- SocietyEntrepreneurial
+  -- SocietyNonEntrepreneurial
+  -- Institution
+  -- OtherForm
+
+declaration structure LegalPersonCreationInfo:
+  data is_registered content boolean
+  data is_created_by_public_act content boolean
+  data is_created_by_charter content boolean
+  data type content LegalPersonType
+  data form content LegalPersonForm
+
+# Перевірка правильності створення
+declaration scope CreationValidityCheck:
+  input info content LegalPersonCreationInfo
+  output is_valid content boolean
+
+scope CreationValidityCheck:
+  definition is_valid =
+    info.is_registered and
+    (if info.type = LegalPersonType.PublicLaw then
+       info.is_created_by_public_act
+     else
+       info.is_created_by_charter)
+```
+
+---
+
+## Стаття 91. Цивільна правоздатність юридичної особи
+
+1. Юридична особа здатна мати такі ж цивільні права та обов'язки, як і фізична особа, крім тих, які за своєю природою можуть належати лише людині.
+2. Юридична особа приватного права може здійснювати будь-які види діяльності, не заборонені законом, якщо інше не встановлено її установчими документами.
+3. Цивільна правоздатність юридичної особи виникає з моменту її державної реєстрації.
+4. Юридична особа може здійснювати окремі види діяльності, перелік яких встановлюється законом, після одержання нею спеціального дозволу (ліцензії).
+
+```catala
+# Правоздатність та право на діяльність
+declaration structure LegalPersonStatus:
+  data type content LegalPersonType
+  data is_state_registered content boolean
+  data activities_restricted_by_charter content boolean
+  data activity_requires_license content boolean
+  data has_valid_license content boolean
+  data represents_exclusively_physical_nature content boolean # наприклад: право на здоров'я, життя
+
+declaration scope LegalPersonCapacityCheck:
+  input entity content LegalPersonStatus
+  output has_capacity content boolean
+  output can_perform_activity content boolean
+
+scope LegalPersonCapacityCheck:
+  # Юридична особа має правоздатність з моменту реєстрації, за винятком суто людських прав (ч. 1, 3)
+  definition has_capacity =
+    entity.is_state_registered and
+    not entity.represents_exclusively_physical_nature
+
+  # Право здійснювати конкретну діяльність з урахуванням ліцензування (ч. 2, 4)
+  definition can_perform_activity =
+    has_capacity and
+    (not entity.activities_restricted_by_charter) and
+    (not entity.activity_requires_license or entity.has_valid_license)
+```
+
+---
+
+## Стаття 104. Припинення юридичної особи
+
+1. Юридична особа припиняється в результаті реорганізації (злиття, приєднання, поділу, перетворення) або ліквідації. У разі реорганізації юридичних осіб майно, права та обов'язки переходять до правонаступників.
+
+```catala
+# Способи припинення юридичної особи
+declaration enumeration TerminationMethod:
+  -- Merger
+  -- Accession
+  -- Division
+  -- Transformation
+  -- Liquidation
+
+declaration scope LegalPersonTermination:
+  input method content TerminationMethod
+  output has_successor content boolean
+  output rights_and_duties_terminated content boolean
+
+scope LegalPersonTermination:
+  # Реорганізація передбачає перехід прав до наступника, ліквідація - ні
+  definition has_successor =
+    match method with pattern
+      -- Merger: true
+      -- Accession: true
+      -- Division: true
+      -- Transformation: true
+      -- Liquidation: false
+
+  # Ліквідація повністю припиняє права та обов'язки без правонаступництва
+  definition rights_and_duties_terminated =
+    match method with pattern
+      -- Merger: false
+      -- Accession: false
+      -- Division: false
+      -- Transformation: false
+      -- Liquidation: true
+```

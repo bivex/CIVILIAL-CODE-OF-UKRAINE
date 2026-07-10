@@ -1,0 +1,124 @@
+# Глава 21. ОСОБИСТІ НЕМАЙНОВІ ПРАВА, ЩО ЗАБЕЗПЕЧУЮТЬ ПРИРОДНЕ ІСНУВАННЯ ФІЗИЧНОЇ ОСОБИ
+
+## Стаття 281. Право на життя
+
+1. Фізична особа має невід'ємне право на життя.
+2. Фізична особа не може бути позбавлена життя.
+   Фізична особа має право захищати своє життя та здоров'я, а також життя та здоров'я іншої фізичної особи від протиправних посягань будь-якими засобами, не забороненими законом.
+3. Медичні, наукові та інші досліди можуть провадитися лише щодо повнолітньої дієздатної фізичної особи за її вільною згодою.
+4. Забороняється задоволення прохання фізичної особи про припинення її життя (Евтаназія).
+5. Стерилізація може відбутися лише за бажанням повнолітньої фізичної особи.
+6. Штучне переривання вагітності, якщо вона не перевищує дванадцяти тижнів, може здійснюватися за бажанням жінки.
+   У випадках, встановлених законодавством, штучне переривання вагітності може бути проведене при вагітності від дванадцяти до двадцяти двох тижнів.
+
+```catala
+# Типи медичних втручань
+declaration enumeration MedicalInterventionType:
+  -- Experiment
+  -- Euthanasia
+  -- Sterilization
+  -- Abortion
+
+# Характеристики пацієнта
+declaration structure PatientDetails:
+  data is_adult content boolean
+  data is_capable content boolean
+  data gives_free_consent content boolean
+  data pregnancy_weeks content integer
+  data has_legal_grounds_for_late_abortion content boolean
+
+declaration scope MedicalInterventionLegality:
+  input intervention content MedicalInterventionType
+  input patient content PatientDetails
+  output is_permitted content boolean
+
+scope MedicalInterventionLegality:
+  definition is_permitted =
+    match intervention with pattern
+      -- Euthanasia: false                                            # Евтаназія завжди заборонена (ч. 4)
+      -- Experiment:                                                  # Досліди - тільки дієздатні повнолітні за згодою (ч. 3)
+         patient.is_adult and
+         patient.is_capable and
+         patient.gives_free_consent
+      -- Sterilization:                                               # Стерилізація - тільки повнолітні за згодою (ч. 5)
+         patient.is_adult and
+         patient.gives_free_consent
+      -- Abortion:                                                    # Аборти - до 12 тижнів вільно, до 22 тижнів за показаннями (ч. 6)
+         if patient.pregnancy_weeks <= 12 then
+           patient.gives_free_consent
+         else if patient.pregnancy_weeks <= 22 then
+           patient.gives_free_consent and patient.has_legal_grounds_for_late_abortion
+         else
+           false
+```
+
+---
+
+## Стаття 284. Право на медичну допомогу
+
+1. Фізична особа має право на надання їй медичної допомоги.
+2. Фізична особа, яка досягла чотирнадцяти років і яка звернулася за наданням їй медичної допомоги, має право на вибір лікаря та вибір методів лікування відповідно до його рекомендацій.
+3. Надання медичної допомоги фізичній особі, яка досягла чотирнадцяти років, провадиться за її згодою.
+4. Повнолітна дієздатна фізична особа, яка усвідомлює значення своїх дій і може керувати ними, має право відмовитися від лікування.
+5. У невідкладних випадках, за наявності реальної загрози життю фізичної особи, медична допомога надається без згоди фізичної особи або її батьків (усиновлювачів), опікуна, піклувальника.
+
+```catala
+# Параметри надання медичної допомоги
+declaration structure MedicalAidCase:
+  data patient_age content integer
+  data patient_is_capable_adult content boolean
+  data patient_consents content boolean
+  data parental_consents content boolean
+  data is_emergency_life_danger content boolean
+  data patient_refuses_treatment content boolean
+
+declaration scope MedicalConsentRequirement:
+  input aid content MedicalAidCase
+  output can_treat content boolean
+
+scope MedicalConsentRequirement:
+  # Загальне правило: лікування з 14 років за власною згодою, до 14 за згодою батьків
+  definition can_treat =
+    if aid.patient_age >= 14 then
+      aid.patient_consents and not (aid.patient_is_capable_adult and aid.patient_refuses_treatment)
+    else
+      aid.parental_consents
+
+  # Виняток: невідкладні випадки при реальній загрозі життю (згода не потрібна)
+  exception definition can_treat = true
+    under condition
+      aid.is_emergency_life_danger
+    consequence equals true
+```
+
+---
+
+## Стаття 290. Право на донорство
+
+1. Повнолітна дієздатна фізична особа має право бути донором крові, її компонентів, а також органів та інших анатомічних матеріалів та репродуктивних клітин. Особа віком до 18 років може бути живим донором гемопоетичних стовбурових клітин відповідно до закону.
+2. Взяття органів та інших анатомічних матеріалів з тіла фізичної особи, яка померла, не допускається, крім випадків і в порядку, встановлених законом.
+
+```catala
+# Донорство органів та крові
+declaration structure DonorCase:
+  data is_adult content boolean
+  data is_capable content boolean
+  data is_stem_cell_donor content boolean
+  data is_post_mortem content boolean
+  data written_consent_provided content boolean
+  data law_allows_post_mortem content boolean
+
+declaration scope DonorEligibilityCheck:
+  input donor content DonorCase
+  output can_be_donor content boolean
+
+scope DonorEligibilityCheck:
+  # За життя донором може бути повнолітня дієздатна особа, або неповнолітня для стовбурових клітин
+  definition can_be_donor =
+    if not donor.is_post_mortem then
+      (donor.is_adult and donor.is_capable and donor.written_consent_provided) or
+      (not donor.is_adult and donor.is_stem_cell_donor and donor.written_consent_provided)
+    else
+      # Після смерті - тільки за наявності дозволу закону або письмової згоди за життя
+      donor.law_allows_post_mortem or donor.written_consent_provided
+```

@@ -1,0 +1,79 @@
+# Глава 86. СПАДКУВАННЯ ЗА ЗАКОНОМ
+
+## Стаття 1258. Черговість спадкування за законом
+1. Спадкоємці за законом одержують право на спадкування почергово.
+2. Кожна наступна черга спадкоємців за законом одержує право на спадкування у разі відсутності спадкоємців попередньої черги, усунення їх від права на спадкування, неприйняття ними спадщини або відмови від її прийняття.
+
+---
+
+## Стаття 1261-1265. Черги спадкоємців за законом
+1. **Перша черга (ст. 1261):** діти спадкодавця, той з подружжя, хто його пережив, та батьки.
+2. **Друга черга (ст. 1262):** рідні брати та сестри спадкодавця, його баба та дід як з боку батька, так і з боку матері.
+3. **Третя черга (ст. 1263):** рідні дядько та тітка спадкодавця.
+4. **Четверта черга (ст. 1264):** особи, які проживали зі спадкодавцем однією сім'єю не менш як п'ять років до часу відкриття спадщини.
+5. **П'ята черга (ст. 1265):** інші родичі спадкодавця до шостого ступеня підпорядкування включно, а також утриманці спадкодавця, які не були членами його сім'ї.
+
+```catala
+# Визначення черги спадкування, яка отримує право на спадщину (ст. 1258)
+declaration structure HeirPool:
+  data has_first_order_heirs content boolean
+  data has_second_order_heirs content boolean
+  data has_third_order_heirs content boolean
+  data has_fourth_order_heirs content boolean
+  data has_fifth_order_heirs content boolean
+
+declaration enumeration ActiveOrder:
+  -- FirstOrder
+  -- SecondOrder
+  -- ThirdOrder
+  -- FourthOrder
+  -- FifthOrder
+  -- Escheat                                                # Відумерле майно (переходить територіальній громаді)
+
+declaration scope ActiveOrderDetermination:
+  input pool content HeirPool
+  output active content ActiveOrder
+
+scope ActiveOrderDetermination:
+  # Наступна черга закликається до спадкування, тільки якщо немає спадкоємців попередніх черг (ч. 2)
+  definition active =
+    if pool.has_first_order_heirs then
+      ActiveOrder.FirstOrder
+    else if pool.has_second_order_heirs then
+      ActiveOrder.SecondOrder
+    else if pool.has_third_order_heirs then
+      ActiveOrder.ThirdOrder
+    else if pool.has_fourth_order_heirs then
+      ActiveOrder.FourthOrder
+    else if pool.has_fifth_order_heirs then
+      ActiveOrder.FifthOrder
+    else
+      ActiveOrder.Escheat
+```
+
+---
+
+## Стаття 1266. Спадкування за правом представлення
+1. Внуки, правнуки спадкодавця спадкують ту частку спадщини, яка належала б за законом їхнім матері, батькові, бабі, дідові, якби вони були живими на час відкриття спадщини.
+2. Прабаба, прадід спадкують ту частку спадщини, яка б належала за законом їхнім дітям (бабі, дідові спадкодавця), якби вони були живими на час відкриття спадщини.
+3. Племінники спадкодавця спадкують ту частку спадщини, яка належала б за законом їхнім матері, батькові (сестрі, братові спадкодавця), якби вони були живими на час відкриття спадщини.
+4. Двоюрідні брати та сестри спадкодавця спадкують ту частку спадщини, яка належала б за законом їхнім матері, батькові (тітці, дядькові спадкодавця), якби вони були живими на час відкриття спадщини.
+
+```catala
+# Спадкування за правом представлення (ст. 1266)
+declaration structure RepresentationDetails:
+  data heir_parent_deceased_before_testator content boolean
+  data relationship_is_descendant_of_deceased_heir content boolean
+
+declaration scope RepresentationSuccessionCheck:
+  input details content RepresentationDetails
+  output can_inherit_by_representation content boolean
+
+scope RepresentationSuccessionCheck:
+  # Право представлення виникає, якщо первісний спадкоємець помер раніше спадкодавця
+  # і новий претендент є його прямим низхідним родичем (внуки, племінники тощо)
+  definition can_inherit_by_representation =
+    details.heir_parent_deceased_before_testator and
+    details.relationship_is_descendant_of_deceased_heir
+```
+

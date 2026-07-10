@@ -1,0 +1,56 @@
+# Глава 82. ВІДШКОДУВАННЯ ШКОДИ (ДЕЛІКТИ)
+
+## Стаття 1166. Загальні підстави відповідальності за завдану майнову шкоду
+1. Майнова шкода, завдана неправомірними рішеннями, діями чи бездіяльністю особистим немайновим правам фізичної особи або майну фізичної чи юридичної особи, відшкодовується в повному обсязі особою, яка її завдала.
+2. Особа, яка завдала шкоди, звільняється від її відшкодування, якщо вона доведе, що шкоди завдано не з її вини.
+3. Шкода, завдана правомірними діями, відшкодовується у випадках, встановлених цим Кодексом та іншим законом.
+
+---
+
+## Стаття 1167. Загальні підстави відповідальності за завдану моральну шкоду
+1. Моральна шкода, завдана фізичній або юридичній особі неправомірними діями, відшкодовується особою, яка її завдала, за наявності її вини, крім випадків, встановлених частиною другою цієї статті.
+2. Моральна шкода відшкодовується незалежно від вини органу державної влади чи фізичної особи, яка її завдала:
+   1) якщо шкоди завдано каліцтвом, іншим ушкодженням здоров'я або смертю фізичної особи внаслідок дії джерела підвищеної небезпеки;
+   2) якщо шкоди завдано фізичній особі внаслідок її незаконного засудження, незаконного притягнення до кримінальної відповідальності тощо.
+
+```catala
+# Логіка позадоговірної відповідальності (ст. 1166, 1167)
+declaration structure DelictDetails:
+  data property_damage_amount content money
+  data is_unlawful_action content boolean
+  data is_caused_by_source_of_extreme_danger content boolean
+  data is_unlawful_prosecution content boolean
+  data has_tortfeasor_fault content boolean
+  data is_lawful_but_law_established_compensation content boolean
+
+declaration scope DelictLiabilityCheck:
+  input delict content DelictDetails
+  output property_liability content money
+  output moral_liability_requires_fault content boolean
+  output moral_liability_without_fault content boolean
+
+scope DelictLiabilityCheck:
+  # Загальні підстави майнового відшкодування (ст. 1166)
+  definition property_liability =
+    if delict.is_unlawful_action then
+      if delict.has_tortfeasor_fault then
+        delict.property_damage_amount
+      else
+        $0.00
+    else if delict.is_lawful_but_law_established_compensation then
+      delict.property_damage_amount
+    else
+      $0.00
+
+  # Визначення, чи потрібна вина для стягнення моральної шкоди (ст. 1167)
+  # Потрібна за замовчуванням (ч. 1)
+  definition moral_liability_requires_fault =
+    delict.is_unlawful_action and 
+    not delict.is_caused_by_source_of_extreme_danger and 
+    not delict.is_unlawful_prosecution
+
+  # Не потрібна у спеціальних випадках (джерело підвищеної небезпеки, незаконне засудження тощо) (ч. 2)
+  definition moral_liability_without_fault =
+    delict.is_unlawful_action and 
+    (delict.is_caused_by_source_of_extreme_danger or delict.is_unlawful_prosecution)
+```

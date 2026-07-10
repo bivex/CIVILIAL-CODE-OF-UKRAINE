@@ -1,0 +1,89 @@
+# Глава 84-85. ЗАГАЛЬНІ ПОЛОЖЕННЯ ПРО СПАДКУВАННЯ ТА СПАДКУВАННЯ ЗА ЗАПОВІТОМ
+
+## Глава 84. Загальні положення про спадкування
+
+### Стаття 1216. Поняття спадкування
+1. Спадкуванням є перехід прав та обов'язків (спадщини) від фізичної особи, яка померла (спадкодавця), до інших осіб (спадкоємців).
+
+### Стаття 1217. Види спадкування
+1. Спадкування здійснюється за заповітом або за законом.
+
+---
+
+## Глава 85. Спадкування за заповітом
+
+### Стаття 1233. Поняття заповіту
+1. Заповітом є особисте розпорядження фізичної особи на випадок своєї смерті.
+
+### Стаття 1241. Право на обов'язкову частку у спадщині
+1. Малолітні, неповнолітні, повнолітні непрацездатні діти спадкодавця, непрацездатна вдова (вдівець) та непрацездатні батьки спадкують, незалежно від змісту заповіту, половину частки, яка належала б кожному з них у разі спадкування за законом (обов'язкова частка).
+
+```catala
+# Перевірка обов'язкової частки спадкоємця (ст. 1241)
+declaration structure HeirDetails:
+  data is_minor_or_underage content boolean
+  data is_disabled_adult_child content boolean
+  data is_disabled_spouse content boolean
+  data is_disabled_parent content boolean
+  data share_by_law content decimal                        # Частка, яку б спадкоємець отримав за законом
+
+declaration scope ObligatoryShareCheck:
+  input heir content HeirDetails
+  output has_right_to_obligatory_share content boolean
+  output obligatory_share content decimal
+
+scope ObligatoryShareCheck:
+  # Право на обов'язкову частку мають вразливі категорії родичів (ч. 1)
+  definition has_right_to_obligatory_share =
+    heir.is_minor_or_underage or
+    heir.is_disabled_adult_child or
+    heir.is_disabled_spouse or
+    heir.is_disabled_parent
+
+  # Розмір обов'язкової частки дорівнює половині частки за законом (ч. 1)
+  definition obligatory_share =
+    if has_right_to_obligatory_share then
+      heir.share_by_law * 50%
+    else
+      0.0%
+```
+
+---
+
+### Стаття 1234. Право на заповіт
+1. Право на заповіт має фізична особа з повною цивільною дієздатністю.
+2. Право на заповіт здійснюється особисто. Вчинення заповіту через представника не допускається.
+
+### Стаття 1247. Форма заповіту
+1. Заповіт складається у письмовій формі, із зазначенням місця та часу його складення.
+2. Заповіт має бути особисто підписаний заповідачем.
+3. Заповіт має бути посвідчений нотаріусом або іншими посадовими, службовими особами, визначеними у статтях 1251-1252 цього Кодексу.
+
+### Стаття 1257. Недійсність заповіту
+1. Заповіт, складений особою, яка не мала на це права, а також заповіт, складений з порушенням вимог щодо його форми та посвідчення, є нікчемним.
+
+```catala
+# Валідність заповіту (ст. 1234, 1247, 1257)
+declaration structure WillValidityDetails:
+  data testator_has_full_capacity content boolean
+  data signed_personally content boolean
+  data written_in_writing content boolean
+  data indicates_place_and_time content boolean
+  data certified_by_authorized_person content boolean
+  data written_via_representative content boolean
+
+declaration scope WillValidityCheck:
+  input details content WillValidityDetails
+  output is_valid content boolean
+
+scope WillValidityCheck:
+  # Заповіт є дійсним, якщо дотримано всіх умов дієздатності та форми
+  definition is_valid =
+    details.testator_has_full_capacity and
+    details.signed_personally and
+    details.written_in_writing and
+    details.indicates_place_and_time and
+    details.certified_by_authorized_person and
+    not details.written_via_representative
+```
+

@@ -1,0 +1,79 @@
+# Глава 30-34. РЕЧОВІ ПРАВА НА ЧУЖЕ МАЙНО (ВОЛОДІННЯ, СЕРВІТУТ, ЕМФІТЕВЗИС, СУПЕРФІЦІЙ)
+
+## Глава 31. Право володіння чужим майном
+
+### Стаття 397. Суб'єкти права володіння чужим майном
+1. Володільцем чужого майна є особа, яка фактично тримає його у себе.
+2. Фактичне володіння майном вважається правомірним, якщо інше не випливає із закону або не встановлено рішенням суду.
+
+---
+
+## Глава 32. Право користування чужим майном (Сервітут)
+
+### Стаття 401. Поняття користування чужим майном
+1. Право користування чужим майном (сервітут) може бути встановлене щодо земельної ділянки, інших природних ресурсів (земельний сервітут) або іншого нерухомого майна для задоволення потреб інших осіб, які не можуть бути задоволені іншим способом.
+
+### Стаття 406. Припинення сервітуту
+1. Сервітут припиняється у разі:
+   1) поєднання в одній особі суб'єкта права сервітуту та власника майна;
+   2) відмови від нього особи, в інтересах якої встановлений сервітут;
+   3) спливу строку, на який було встановлено сервітут;
+   4) припинення обставини, яка була підставою для встановлення сервітуту;
+   5) невикористання сервітуту протягом трьох років підряд;
+   6) смерті особи, на користь якої було встановлено особистий сервітут.
+
+```catala
+# Логіка припинення сервітуту (ст. 406)
+declaration structure ServitudeTerminationConditions:
+  data is_merger_of_interests content boolean
+  data holder_waived_servitude content boolean
+  data term_expired content boolean
+  data establishing_circumstance_ceased content boolean
+  data years_of_non_use content integer
+  data personal_holder_deceased content boolean
+  data is_personal_servitude content boolean
+
+declaration scope ServitudeTerminationCheck:
+  input conditions content ServitudeTerminationConditions
+  output is_terminated content boolean
+
+scope ServitudeTerminationCheck:
+  # Сервітут припиняється, якщо виконано хоча б одну з умов закону (ч. 1)
+  definition is_terminated =
+    conditions.is_merger_of_interests or
+    conditions.holder_waived_servitude or
+    conditions.term_expired or
+    conditions.establishing_circumstance_ceased or
+    conditions.years_of_non_use >= 3 or
+    (conditions.is_personal_servitude and conditions.personal_holder_deceased)
+```
+
+---
+
+## Глава 33. Емфітевзис (Користування для с/г потреб)
+
+### Стаття 408. Строк договору емфітевзису
+1. Строк договору про надання права користування чужою земельною ділянкою для сільськогосподарських потреб встановлюється договором і не може перевищувати 50 років.
+
+---
+
+## Глава 34. Суперфіцій (Користування для забудови)
+
+### Стаття 413. Поняття суперфіцію
+1. Власник земельної ділянки має право надати її в користування іншій особі для будівництва промислових, побутових, соціально-культурних, житлових та інших споруд і будівель (суперфіцій).
+2. Право користування чужою земельною ділянкою для забудови (суперфіцій) може бути встановлено на визначений або невизначений строк, але не більше ніж на 50 років.
+
+```catala
+# Перевірка обмеження строку емфітевзису та суперфіцію (ст. 408, 413)
+declaration structure ContractDurationInfo:
+  data years content integer
+
+declaration scope LimitedRealRightDurationCheck:
+  input contract content ContractDurationInfo
+  output is_valid content boolean
+
+scope LimitedRealRightDurationCheck:
+  # Строк не може перевищувати 50 років за законом
+  definition is_valid =
+    contract.years <= 50
+```

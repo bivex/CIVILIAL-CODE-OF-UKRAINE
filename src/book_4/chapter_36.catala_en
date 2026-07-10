@@ -1,0 +1,39 @@
+# Глава 36. АВТОРСЬКЕ ПРАВО ТА СУМІЖНІ ПРАВА
+
+## Стаття 433. Об'єкти авторського права
+1. Об'єктами авторського права є твори у сфері літератури, мистецтва, науки.
+
+---
+
+## Стаття 435. Суб'єкти авторського права
+1. Суб'єктом авторського права є автор твору. Суб'єктами авторського права можуть бути також інші фізичні та юридичні особи, які набули майнових прав на твір відповідно до договору або закону.
+
+---
+
+## Стаття 446. Строк чинності майнових прав авторського права
+1. Майнові права на твір виникають з моменту його створення і діють протягом усього життя автора та 70 років після його смерті (крім випадків, встановлених законом).
+   * Строк у 70 років починає перебіг з 1 січня року, наступного за роком смерті автора.
+
+```catala
+# Перевірка чинності авторських майнових прав (ст. 446)
+declaration structure CopyrightTermCase:
+  data creation_date content date
+  data author_deceased content boolean
+  data author_death_date content date
+  data current_date content date
+
+declaration scope CopyrightValidityCheck:
+  input info content CopyrightTermCase
+  output is_valid content boolean
+
+scope CopyrightValidityCheck:
+  # Майнові права діють за життя автора
+  definition is_valid = not info.author_deceased
+
+  # Виняток: діють протягом 70 років після смерті автора
+  exception definition is_valid = true
+    under condition
+      info.author_deceased and
+      info.current_date <= info.author_death_date + 70 year
+    consequence equals true
+```

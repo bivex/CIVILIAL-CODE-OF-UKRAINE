@@ -1,0 +1,40 @@
+# Глава 52-53. ЗАГАЛЬНІ ПОЛОЖЕННЯ ПРО ДОГОВІР
+
+## Глава 52. Поняття та умови договору
+
+### Стаття 626. Поняття договору
+1. Договором є домовленість двох або більше сторін, спрямована на встановлення, зміну або припинення цивільних прав та обов'язків.
+
+### Стаття 638. Укладення договору
+1. Договір є укладеним, якщо сторони в належній формі досягли згоди з усіх істотних умов договору.
+Істотними умовами договору є умови про предмет договору, умови, що визначені законом як істотні або є необхідними для договорів даного виду, а також усі ті умови, щодо яких за заявою хоча б однієї із сторін має бути досягнуто згоди.
+
+### Стаття 640. Момент укладення договору
+1. Договір є укладеним з моменту одержання особою, яка направила пропозицію укласти договір (оферту), відповіді про прийняття цієї пропозиції (акцепту).
+2. Якщо відповідно до акта цивільного законодавства для укладення договору необхідні також передання майна або вчинення іншої дії, договір є укладеним з моменту передання відповідного майна або вчинення певної дії (реальний договір).
+3. Договір, що підлягає державній реєстрації, є укладеним з моменту державної реєстрації.
+
+```catala
+# Перевірка укладення договору (ст. 638, 640)
+declaration structure ContractConclusionDetails:
+  data reached_essential_terms content boolean
+  data appropriate_form_followed content boolean
+  data acceptance_received content boolean
+  data requires_property_transfer content boolean
+  data property_transferred content boolean
+  data requires_registration content boolean
+  data registered content boolean
+
+declaration scope ContractConclusionCheck:
+  input info content ContractConclusionDetails
+  output is_concluded content boolean
+
+scope ContractConclusionCheck:
+  # Договір вважається укладеним, якщо дотримано всіх умов належного укладення
+  definition is_concluded =
+    info.reached_essential_terms and
+    info.appropriate_form_followed and
+    info.acceptance_received and
+    (not info.requires_property_transfer or info.property_transferred) and
+    (not info.requires_registration or info.registered)
+```

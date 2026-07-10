@@ -1,0 +1,53 @@
+# Глава 5. ФІЗИЧНА ОСОБА - ПІДПРИЄМЕЦЬ
+
+## Стаття 50. Право фізичної особи на здійснення підприємницької діяльності
+
+1. Право на здійснення підприємницької діяльності, яку не заборонено законом, має фізична особа з повною цивільною дієздатністю.
+Обмеження права фізичної особи на здійснення підприємницької діяльності встановлюються Конституцією України та законом.
+2. Физична особа здійснює своє право на підприємницьку діяльність за умови її державної реєстрації в порядку, встановленому законом.
+3. Якщо особа розпочала підприємницьку діяльність без державної реєстрації, уклавши відповідні договори, вона не має права оспорювати ці договори на тій підставі, що вона не є підприємцем.
+
+---
+
+## Стаття 51. Застосування до підприємницької діяльності фізичних осіб нормативно-правових актів, що регулюють підприємницьку діяльність юридичних осіб
+
+1. До підприємницької діяльності фізичних осіб застосовуються нормативно-правові акти, що регулюють підприємницьку діяльність юридичних осіб, якщо інше не встановлено законом або не випливає із суті відносин.
+
+---
+
+## Стаття 52. Цивільно-правова відповідальність фізичної особи - підприємця
+
+1. Фізична особа - підприємець відповідає за зобов'язаннями, пов'язаними з підприємницькою діяльністю, усім своїм майном, крім майна, на яке згідно із законом не може бути звернено стягнення.
+
+```catala
+# Умови набуття права на підприємницьку діяльність
+declaration structure EntrepreneurshipApplication:
+  data is_prohibited_by_law content boolean
+  data state_registration_completed content boolean
+
+declaration scope EntrepreneurshipEligibility:
+  input capacity content ActiveCapacity
+  input app content EntrepreneurshipApplication
+  output is_eligible content boolean
+
+scope EntrepreneurshipEligibility:
+  # Право мають особи лише з повною дієздатністю, за наявності держреєстрації
+  definition is_eligible =
+    capacity = ActiveCapacity.Full and
+    not app.is_prohibited_by_law and
+    app.state_registration_completed
+
+# Відповідальність та звернення стягнення на майно ФОП
+declaration structure PropertyItemForLiability:
+  data belongs_to_entrepreneur content boolean
+  data cannot_be_attached_by_law content boolean
+
+declaration scope LiabilityAttachmentCheck:
+  input item content PropertyItemForLiability
+  output subject_to_attachment content boolean
+
+scope LiabilityAttachmentCheck:
+  definition subject_to_attachment =
+    item.belongs_to_entrepreneur and
+    not item.cannot_be_attached_by_law
+```

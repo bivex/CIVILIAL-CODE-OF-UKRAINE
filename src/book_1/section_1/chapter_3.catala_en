@@ -1,0 +1,202 @@
+# Глава 3. ЗАХИСТ ЦИВІЛЬНИХ ПРАВ ТА ІНТЕРЕСІВ
+
+## Стаття 15. Право на захист цивільних прав та інтересів
+
+1. Кожна особа має право на захист свого цивільного права у разі його порушення, невизнання або оспорювання.
+2. Кожна особа має право на захист свого інтересу, який не суперечить загальним засадам цивільного законодавства.
+
+```catala
+# Перевірка наявності права на захист
+declaration structure RightProtectionState:
+  data is_violated content boolean
+  data is_not_recognized content boolean
+  data is_disputed content boolean
+
+declaration structure InterestProtectionState:
+  data conflicts_with_general_principles content boolean
+
+declaration scope RightProtectionEligibility:
+  input state content RightProtectionState
+  output is_eligible content boolean
+
+scope RightProtectionEligibility:
+  definition is_eligible =
+    state.is_violated or state.is_not_recognized or state.is_disputed
+
+declaration scope InterestProtectionEligibility:
+  input state content InterestProtectionState
+  output is_eligible content boolean
+
+scope InterestProtectionEligibility:
+  definition is_eligible =
+    not state.conflicts_with_general_principles
+```
+
+---
+
+## Стаття 16. Захист цивільних прав та інтересів судом
+
+1. Кожна особа має право звернутися до суду за захистом свого особистого немайнового або майнового права та інтересу.
+2. Способами захисту цивільних прав та інтересів можуть бути:
+   1) визнання права;
+   2) визнання правочину недійсним;
+   3) припинення дії, яка порушує право;
+   4) відновлення становища, яке існувало до порушення;
+   5) примусове виконання обов'язку в натурі;
+   6) зміна правовідношення;
+   7) припинення правовідношення;
+   8) відшкодування збитків та інші способи відшкодування майнової шкоди;
+   9) відшкодування моральної (немайнової) шкоди;
+   10) визнання незаконними рішення, дій чи бездіяльності органу державної влади, органу влади Автономної Республіки Крим або органу місцевого самоврядування, їхніх посадових і службових осіб.
+   Суд може захистити цивільне право або інтерес іншим способом, що встановлений договором або законом чи судом у визначених законом випадках.
+3. Суд може відмовити у захисті цивільного права та інтересу особи в разі порушення нею положень частин другої - п'ятої статті 13 цього Кодексу.
+
+```catala
+# Способи захисту прав судом
+declaration enumeration CourtProtectionMethod:
+  -- RecognitionOfRight
+  -- InvalidationOfTransaction
+  -- CessationOfViolatingAction
+  -- RestorationOfPriorState
+  -- ForcedPerformanceInKind
+  -- ModificationOfRelationship
+  -- TerminationOfRelationship
+  -- DamagesCompensation
+  -- MoralDamageCompensation
+  -- InvalidationOfPublicAct
+  -- ContractualOrOtherLegalMethod
+  -- CourtChosenMethod
+
+declaration scope CourtProtectionCheck:
+  input is_abuse_of_right content boolean
+  input method content CourtProtectionMethod
+  input method_is_established_by_law_or_contract content boolean
+  output court_can_grant content boolean
+
+scope CourtProtectionCheck:
+  # Загальне правило: суд може надати захист
+  definition court_can_grant = true
+
+  # Виняток 1: вибраний нетиповий спосіб захисту, який не передбачений законом чи договором
+  exception definition court_can_grant = false
+    under condition
+      match method with pattern
+        -- RecognitionOfRight: false
+        -- InvalidationOfTransaction: false
+        -- CessationOfViolatingAction: false
+        -- RestorationOfPriorState: false
+        -- ForcedPerformanceInKind: false
+        -- ModificationOfRelationship: false
+        -- TerminationOfRelationship: false
+        -- DamagesCompensation: false
+        -- MoralDamageCompensation: false
+        -- InvalidationOfPublicAct: false
+        -- CourtChosenMethod: false
+        -- ContractualOrOtherLegalMethod: not method_is_established_by_law_or_contract
+    consequence equals false
+
+  # Виняток 2: суд відмовляє у захисті, якщо позивач зловживав своїми правами (ст. 13)
+  exception definition court_can_grant = false
+    under condition
+      is_abuse_of_right
+    consequence equals false
+```
+
+---
+
+## Стаття 22. Відшкодування збитків та інші способи відшкодування майнової шкоди
+
+1. Особа, якій завдано збитків у результаті порушення її цивільного права, має право на їх відшкодування.
+2. Збитками є:
+   1) втрати, яких особа зазнала у зв'язку зі знищенням або пошкодженням речі, а також витрати, які особа зробила або мусить зробити для відновлення свого порушеного права (реальні збитки);
+   2) доходи, які особа могла б реально одержати за звичайних обставин, якби її право не було порушене (упущена вигода).
+3. Збитки відшкодовуються у повному обсязі, якщо договором або законом не передбачено відшкодування у меншому або більшому розмірі.
+   Якщо особа, яка порушила право, одержала у зв'язку з цим доходи, то розмір упущеної вигоди, що має відшкодовуватися особі, право якої порушено, не може бути меншим від доходів, одержаних послушником (особою, яка порушила право).
+
+```catala
+# Вхідні дані для розрахунку збитків
+declaration structure DamagesInput:
+  data real_losses content money
+  data lost_profits_base content money
+  data violator_revenues content money
+  data custom_compensation_amount_agreed content boolean
+  data custom_compensation_amount content money
+
+declaration scope DamagesCalculation:
+  input damages content DamagesInput
+  output total_damages content money
+
+scope DamagesCalculation:
+  # Розрахунок збитків у повному обсязі
+  # Упущена вигода не може бути меншою за дохід порушника
+  definition total_damages =
+    let real_lost_profits =
+      if damages.lost_profits_base >= damages.violator_revenues then
+        damages.lost_profits_base
+      else
+        damages.violator_revenues
+    in
+    damages.real_losses + real_lost_profits
+
+  # Виняток: договором або законом встановлено інший розмір збитків
+  exception definition total_damages = damages.custom_compensation_amount
+    under condition
+      damages.custom_compensation_amount_agreed
+    consequence equals damages.custom_compensation_amount
+```
+
+---
+
+## Стаття 23. Відшкодування моральної шкоди
+
+1. Особа має право на відшкодування моральної шкоди, завданої внаслідок порушення її прав.
+2. Моральна шкода полягає:
+   1) у фізичному болю та стражданнях, яких фізична особа зазнала у зв'язку з каліцтвом або іншим ушкодженням здоров'я;
+   2) у душевних стражданнях, яких фізична особа зазнала у зв'язку з протиправною поведінкою щодо неї самої, членів її сім'ї чи близьких родичів;
+   3) у душевних стражданнях, яких фізична особа зазнала у зв'язку із знищенням чи пошкодженням її майна;
+   4) у приниженні честі та гідності фізичної особи, а також ділової репутації фізичної або юридичної особи.
+3. Якщо інше не встановлено законом, моральна шкода відшкодовується грошовими коштами, іншим майном або в інший спосіб.
+   Розмір грового відшкодування моральної шкоди визначається судом...
+4. Моральна шкода відшкодовується незалежно від майнової шкоди, яка підлягає відшкодуванню, та не пов'язана з розміром цього відшкодування.
+5. Моральна шкода відшкодовується одноразово, якщо інше не встановлено договором або законом.
+
+```catala
+# Фактори наявності моральної шкоди
+declaration structure MoralDamageComponents:
+  data experienced_physical_pain content boolean
+  data experienced_mental_suffering_family content boolean
+  data experienced_mental_suffering_property content boolean
+  data suffered_reputation_humiliation content boolean
+
+declaration scope MoralDamageExistence:
+  input components content MoralDamageComponents
+  output has_moral_damage content boolean
+
+scope MoralDamageExistence:
+  definition has_moral_damage =
+    components.experienced_physical_pain or
+    components.experienced_mental_suffering_family or
+    components.experienced_mental_suffering_property or
+    components.suffered_reputation_humiliation
+
+# Перевірка можливості виплати
+declaration structure MoralDamagePayoutState:
+  data already_paid content boolean
+  data otherwise_established_by_law_or_contract content boolean
+
+declaration scope MoralDamagePayoutCheck:
+  input state content MoralDamagePayoutState
+  output can_be_compensated content boolean
+
+scope MoralDamagePayoutCheck:
+  # Загальне правило: моральна шкода компенсується одноразово (якщо ще не виплачувалась)
+  definition can_be_compensated =
+    not state.already_paid
+
+  # Виняток: законом чи договором дозволено повторну компенсацію
+  exception definition can_be_compensated = true
+    under condition
+      state.already_paid and
+      state.otherwise_established_by_law_or_contract
+    consequence equals true
+```

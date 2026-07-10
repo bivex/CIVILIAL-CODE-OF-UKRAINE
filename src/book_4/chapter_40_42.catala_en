@@ -1,0 +1,59 @@
+# Глава 40-42. ТОРГОВЕЛЬНІ МАРКИ, ГЕОГРАФІЧНІ ЗАЗНАЧЕННЯ, КОМЕРЦІЙНІ ТАЄМНИЦІ
+
+## Глава 40. Право інтелектуальної власності на торговельну марку
+
+### Стаття 496. Строк чинності майнових прав на торговельну марку
+1. Виключні майнові права на торговельну марку є чинними протягом 10 років з дати подання заявки.
+2. Цей строк може бути продовжений щоразу на 10 років за клопотанням власника.
+
+---
+
+## Глава 41. Право інтелектуальної власності на географічне зазначення
+
+### Стаття 503. Строк чинності майнових прав на географічне зазначення
+1. Виключні майнові права на географічне зазначення виникають з дати державної реєстрації і є чинними безстроково.
+
+---
+
+## Глава 42. Право інтелектуальної власності на комерційну таємницю
+
+### Стаття 508. Строк чинності виключних майнових прав на комерційну таємницю
+1. Строк чинності виключних майнових прав на комерційну таємницю обмежений часом існування сукупності ознак комерційної таємниці (конфіденційність, комерційна цінність через секретність, вжиття заходів охорони).
+
+```catala
+# Комерційні позначення та таємниці
+declaration enumeration TradeObject:
+  -- Trademark
+  -- GeographicalIndication
+  -- CommercialSecret
+
+# Характеристики комерційного об'єкта
+declaration structure TradeObjectDetails:
+  data obj_type content TradeObject
+  data registration_date content date
+  data current_date content date
+  data trademark_extensions_count content integer
+  data secret_remains_confidential content boolean
+  data secret_has_commercial_value content boolean
+  data secret_protective_measures_active content boolean
+
+declaration scope TradeObjectValidityCheck:
+  input details content TradeObjectDetails
+  output is_valid content boolean
+
+scope TradeObjectValidityCheck:
+  definition is_valid =
+    match details.obj_type with pattern
+      -- Trademark:
+         # Строк дії 10 років + 10 років за кожне продовження (ч. 2)
+         let total_years = 10 + (details.trademark_extensions_count * 10) in
+         details.current_date <= details.registration_date + total_years year
+      -- GeographicalIndication:
+         # Чинне безстроково (ст. 503)
+         true
+      -- CommercialSecret:
+         # Чинне, поки існує сукупність ознак комерційної таємниці (ст. 508)
+         details.secret_remains_confidential and
+         details.secret_has_commercial_value and
+         details.secret_protective_measures_active
+```

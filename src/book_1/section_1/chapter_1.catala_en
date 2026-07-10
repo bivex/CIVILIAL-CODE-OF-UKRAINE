@@ -1,0 +1,215 @@
+# Глава 1. ЦИВІЛЬНЕ ЗАКОНОДАВСТВО УКРАЇНИ
+
+## Стаття 1. Відносини, що регулюються цивільним законодавством
+
+1. Цивільним законодавством регулюються особисті немайнові та майнові відносини (цивільні відносини), засновані на юридичній рівності, вільному волевиявленні, майновій самостійності їх учасників.
+2. До майнових відносин, заснованих на адміністративному або іншому владному підпорядкуванні однієї сторони другій стороні, а також до податкових, бюджетних відносин цивільне законодавство не застосовується, якщо інше не встановлено законом.
+
+```catala
+# Характеристики правовідносин для перевірки застосовності
+declaration structure RelationCharacteristics:
+  data is_personal_non_property content boolean
+  data is_property content boolean
+  data is_based_on_legal_equality content boolean
+  data is_based_on_free_will content boolean
+  data is_based_on_property_independence content boolean
+  data is_based_on_authoritative_subordination content boolean
+  data is_tax_or_budget_relation content boolean
+  data is_otherwise_established_by_law content boolean
+
+declaration scope RelationApplicability:
+  input relation content RelationCharacteristics
+  output applies content boolean
+
+scope RelationApplicability:
+  # Загальне правило: застосовується до цивільних відносин
+  definition applies =
+    (relation.is_personal_non_property or relation.is_property) and
+    relation.is_based_on_legal_equality and
+    relation.is_based_on_free_will and
+    relation.is_based_on_property_independence
+  
+  # Виняток: владне підпорядкування чи фінансові відносини (якщо інше не встановлено законом)
+  exception definition applies = relation.is_otherwise_established_by_law
+    under condition
+      relation.is_based_on_authoritative_subordination or relation.is_tax_or_budget_relation
+    consequence equals relation.is_otherwise_established_by_law
+```
+
+---
+
+## Стаття 2. Учасники цивільних відносин
+
+1. Учасниками цивільних відносин є фізичні особи та юридичні особи (далі - особи).
+2. Учасниками цивільних відносин є: держава Україна, Автономна Республіка Крим, територіальні громади, іноземні держави та інші суб'єкти публічного права.
+
+```catala
+# Категорії учасників цивільних відносин
+declaration enumeration ParticipantType:
+  -- PhysicalPerson
+  -- LegalPerson
+  -- StateUkraine
+  -- AutonomousRepublicOfCrimea
+  -- TerritorialCommunity
+  -- ForeignState
+  -- OtherPublicLawSubject
+
+declaration structure CivilRelationParticipant:
+  data participant_type content ParticipantType
+
+declaration scope CivilParticipantCheck:
+  input participant content CivilRelationParticipant
+  output is_eligible content boolean
+
+scope CivilParticipantCheck:
+  definition is_eligible = true
+```
+
+---
+
+## Стаття 5. Дія актів цивільного законодавства у часі
+
+1. Акти цивільного законодавства регулюють відносини, які виникли з дня набрання ними чинності.
+2. Акт цивільного законодавства не має зворотної дії у часі, крім випадків, коли він пом'якшує або скасовує цивільну відповідальність особи.
+3. Якщо цивільні відносини виникли раніше і регулювалися актом цивільного законодавства, який втратив чинність, новий акт цивільного законодавства застосовується до прав та обов'язків, що виникли з моменту набрання ним чинності.
+
+```catala
+# Відомості про нормативний акт
+declaration structure CivilActInfo:
+  data entry_into_force content date
+  data mitigates_or_cancels_liability content boolean
+
+# Відомості про виникнення правовідносин
+declaration structure RelationTimeInfo:
+  data occurrence_date content date
+  data liability_incurred content boolean
+
+declaration scope ActApplicabilityInTime:
+  input act content CivilActInfo
+  input relation content RelationTimeInfo
+  output applies content boolean
+
+scope ActApplicabilityInTime:
+  # Загальне правило: акт регулює відносини з моменту набрання чинності
+  definition applies =
+    relation.occurrence_date >= act.entry_into_force
+
+  # Виняток: зворотна дія у часі, якщо пом'якшує або скасовує відповідальність
+  exception definition applies = true
+    under condition
+      relation.occurrence_date < act.entry_into_force and
+      relation.liability_incurred and
+      act.mitigates_or_cancels_liability
+    consequence equals true
+```
+
+---
+
+## Стаття 6. Акти цивільного законодавства і договір
+
+1. Сторони мають право укласти договір, який не передбачений актами цивільного законодавства, але відповідає загальним засадам цивільного законодавства.
+2. Сторони мають право врегулювати у договорі, який передбачений актами цивільного законодавства, свої відносини, які не врегульовані цими актами.
+3. Сторони в договорі можуть відступити від положень актів цивільного законодавства і врегулювати свої відносини на власний розсуд.
+Сторони в договорі не можуть відступити від положень актів цивільного законодавства, якщо в цих актах прямо вказано про це, а також у разі, якщо обов'язковість для сторін положень актів цивільного законодавства випливає з їх змісту або із суті відносин між сторонами.
+
+```catala
+# Характеристики положення договору
+declaration structure ContractProvision:
+  data corresponds_to_general_principles content boolean
+  data departs_from_act_provisions content boolean
+  data act_explicitly_prohibits_departure content boolean
+  data obligatoriness_follows_from_content content boolean
+
+declaration scope ContractProvisionValidity:
+  input provision content ContractProvision
+  output is_valid content boolean
+
+scope ContractProvisionValidity:
+  # Загальне правило: договірне положення є дійсним, якщо відповідає загальним засадам
+  definition is_valid =
+    provision.corresponds_to_general_principles
+
+  # Виняток: положення недійсне, якщо воно відступає від актів, де це заборонено
+  exception definition is_valid = false
+    under condition
+      provision.departs_from_act_provisions and
+      (provision.act_explicitly_prohibits_departure or
+       provision.obligatoriness_follows_from_content)
+    consequence equals false
+```
+
+---
+
+## Стаття 7. Звичай
+
+1. Цивільні відносини можуть регулюватися звичаєм, зокрема звичаєм ділового обороту.
+Звичаєм є правило поведінки, яке не встановлене актами цивільного законодавства, але є усталеним у певній сфері цивільних відносин.
+2. Звичай, що суперечить договору або актам цивільного законодавства, у цивільних відносинах не застосовується.
+
+```catala
+# Перевірка застосовності звичаю
+declaration structure CustomRule:
+  data is_established_in_field content boolean
+  data conflicts_with_contract content boolean
+  data conflicts_with_legislation content boolean
+
+declaration scope CustomApplicability:
+  input custom content CustomRule
+  output applies content boolean
+
+scope CustomApplicability:
+  definition applies =
+    custom.is_established_in_field and
+    not custom.conflicts_with_contract and
+    not custom.conflicts_with_legislation
+```
+
+---
+
+## Стаття 8. Аналогія
+
+1. Якщо цивільні відносини не врегульовані цим Кодексом, іншими актами цивільного законодавства або договором, вони регулюються тими правовими нормами цього Кодексу, інших актів цивільного законодавства, що регулюють подібні за змістом цивільні відносини (аналогія закону).
+2. У разі неможливості використати аналогію закону для регулювання цивільних відносин вони регулюються відповідно до загальних засад цивільного законодавства (аналогія права).
+
+```catala
+# Стан врегульованості правовідносин
+declaration structure RegulationState:
+  data regulated_by_code content boolean
+  data regulated_by_other_acts content boolean
+  data regulated_by_contract content boolean
+  data similar_norms_exist content boolean
+
+declaration enumeration AppliedRegulationSource:
+  -- DirectlyApplicableLaw
+  -- AnalogyOfLaw
+  -- AnalogyOfRight
+
+declaration scope AnalogyDetermination:
+  input state content RegulationState
+  output regulation_source content AppliedRegulationSource
+
+scope AnalogyDetermination:
+  # За замовчуванням: діє пряма норма закону
+  definition regulation_source =
+    AppliedRegulationSource.DirectlyApplicableLaw
+
+  # Виняток 1: якщо прямих норм немає, але є подібні норми -> аналогія закону
+  exception definition regulation_source =
+    AppliedRegulationSource.AnalogyOfLaw
+    under condition
+      not state.regulated_by_code and
+      not state.regulated_by_other_acts and
+      not state.regulated_by_contract and
+      state.similar_norms_exist
+    consequence equals AppliedRegulationSource.AnalogyOfLaw
+
+  # Виняток 2: якщо немає навіть подібних норм -> аналогія права
+  exception definition regulation_source =
+    AppliedRegulationSource.AnalogyOfRight
+    under condition
+      not state.regulated_by_code and
+      not state.regulated_by_other_acts and
+      not state.regulated_by_contract and
+      not state.similar_norms_exist
+    consequence equals AppliedRegulationSource.AnalogyOfRight
+```

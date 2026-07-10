@@ -1,0 +1,68 @@
+# Глава 49. ЗАБЕЗПЕЧЕННЯ ВИКОНАННЯ ЗОБОВ'ЯЗАННЯ
+
+## Стаття 546. Види забезпечення виконання зобов'язання
+1. Виконання зобов'язання може забезпечуватися неустойкою, порукою, гарантією, заставою, притриманням, завдатком.
+
+---
+
+## Стаття 549. Поняття неустойки (штрафу, пені)
+1. Неустойкою (штрафом, пенею) є грошова сума або інше майно, які боржник повинен передати кредиторові у разі порушення боржником зобов'язання.
+2. Штрафом є неустойка, що обчислюється у відсотках від суми невиконаного або неналежно виконаного зобов'язання.
+3. Пенею є неустойка, що обчислюється у відсотках від суми несвоєчасно виконаного грошового зобов'язання за кожен день прострочення виконання.
+
+```catala
+# Розрахунок неустойки (ст. 549)
+declaration enumeration PenaltyType:
+  -- Fine
+  -- Penya
+
+declaration structure PenaltyInput:
+  data breached_amount content money
+  data penalty_type content PenaltyType
+  data percentage content decimal
+  data days_of_delay content integer
+
+declaration scope PenaltyCalculation:
+  input info content PenaltyInput
+  output penalty_amount content money
+
+scope PenaltyCalculation:
+  definition penalty_amount =
+    match info.penalty_type with pattern
+      -- Fine:
+         # Штраф: одноразовий відсоток від суми (ч. 2)
+         info.breached_amount * info.percentage
+      -- Penya:
+         # Пеня: відсоток за кожен день прострочення (ч. 3)
+         let daily_rate = info.breached_amount * info.percentage in
+         daily_rate * info.days_of_delay
+```
+
+---
+
+## Стаття 554. Обсяг відповідальності поручителя
+1. У разі порушення боржником зобов'язання, забезпеченого порукою, боржник і поручитель відповідають перед кредитором як солідарні боржники, якщо договором поруки не встановлено додаткову (субсидіарну) відповідальність поручителя.
+2. Поручитель відповідає перед кредитором у тому ж обсязі, що і боржник, включаючи сплату основного боргу, відсотків, неустойки, відшкодування збитків, якщо інше не встановлено договором поруки.
+
+```catala
+# Відповідальність поручителя (ст. 554)
+declaration structure SuretyCase:
+  data is_subsidiary_liability content boolean
+  data main_debt content money
+  data main_interest content money
+  data main_penalty content money
+  data main_damages content money
+
+declaration scope SuretyLiabilityCheck:
+  input case content SuretyCase
+  output is_joint_and_several content boolean
+  output total_surety_liability content money
+
+scope SuretyLiabilityCheck:
+  # Поручитель відповідає солідарно, якщо договором не передбачено субсидіарність (ч. 1)
+  definition is_joint_and_several = not case.is_subsidiary_liability
+
+  # Поручитель відповідає у повному обсязі боргу, включаючи штрафи та збитки (ч. 2)
+  definition total_surety_liability =
+    case.main_debt + case.main_interest + case.main_penalty + case.main_damages
+```

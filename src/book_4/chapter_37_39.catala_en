@@ -1,0 +1,65 @@
+# Глава 37-39. ПАТЕНТНЕ ПРАВО, КОМПОНУВАННЯ ТА СОРТИ РОСЛИН/ПОРОДИ ТВАРИН
+
+## Глава 37. Право інтелектуальної власності на винахід, корисну модель, промисловий зразок
+
+### Стаття 465. Строк чинності патенту
+1. Чинність виключних майнових прав інтелектуальної власності на винахід, корисну модель, промисловий зразок засвідчується патентом.
+2. Строк чинності патенту:
+   * На винахід - 20 років від дати подання заявки.
+   * На корисну модель - 10 років від дати подання заявки.
+   * На промисловий зразок - 5 років від дати подання заявки (може бути продовжений за клопотанням власника, але загальний строк не може перевищувати 25 років).
+
+---
+
+## Глава 38. Право інтелектуальної власності на компонування напівпровідникового виробу
+
+### Стаття 475. Строк чинності виключних майнових прав на компонування
+1. Виключні майнові права на компонування напівпровідникового виробу є чинними протягом 10 років, починаючи з дати подання заявки або дати першого комерційного використання.
+
+---
+
+## Глава 39. Право інтелектуальної власності на сорт рослин, породу тварин
+
+### Стаття 488. Строк чинності майнових прав на сорт рослин, породу тварин
+1. Виключні майнові права на сорт рослин та породу тварин діють протягом 30 років від дати державної реєстрації (щодо дерев та винограду - 35 років).
+
+```catala
+# Класифікація промислових об'єктів та патентів
+declaration enumeration PatentType:
+  -- Invention
+  -- UtilityModel
+  -- IndustrialDesign
+  -- SemiconductorLayout
+  -- PlantVariety
+  -- TreeOrGrapeVariety
+
+# Деталі патенту
+declaration structure PatentDetails:
+  data patent_type content PatentType
+  data filing_date content date
+  data current_date content date
+  data industrial_design_extended_years content integer
+
+declaration scope PatentValidityCheck:
+  input patent content PatentDetails
+  output is_valid content boolean
+
+scope PatentValidityCheck:
+  definition is_valid =
+    match patent.patent_type with pattern
+      -- Invention:
+         patent.current_date <= patent.filing_date + 20 year
+      -- UtilityModel:
+         patent.current_date <= patent.filing_date + 10 year
+      -- IndustrialDesign:
+         # Подовження можливе, але ліміт 25 років (5 років базові + подовження)
+         let limit_years = 5 + patent.industrial_design_extended_years in
+         let actual_limit = if limit_years <= 25 then limit_years else 25 in
+         patent.current_date <= patent.filing_date + actual_limit year
+      -- SemiconductorLayout:
+         patent.current_date <= patent.filing_date + 10 year
+      -- PlantVariety:
+         patent.current_date <= patent.filing_date + 30 year
+      -- TreeOrGrapeVariety:
+         patent.current_date <= patent.filing_date + 35 year
+```

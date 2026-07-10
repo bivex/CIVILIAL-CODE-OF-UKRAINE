@@ -1,0 +1,67 @@
+# Глава 87-90. ЗДІЙСНЕННЯ ПРАВА НА СПАДКУВАННЯ ТА СПАДКОВИЙ ДОГОВІР
+
+## Глава 87. Здійснення права на спадкування
+
+### Стаття 1268. Прийняття спадщини
+1. Спадкоємець за заповітом чи за законом має право прийняти спадщину або не прийняти її.
+2. Не допускається прийняття спадщини з умовою чи із застереженням.
+
+### Стаття 1270. Строк для прийняття спадщини
+1. Для прийняття спадщини встановлюється строк у шість місяців, який починається з часу відкриття спадщини.
+2. Якщо виникнення у особи права на спадкування залежить від неприйняття спадщини або відмови від її прийняття іншими спадкоємцями, строк для прийняття нею спадщини встановлюється у три місяці з моменту неприйняття іншими спадкоємцями спадщини або відмови від її прийняття.
+
+```catala
+# Перевірка строків прийняття спадщини (ст. 1270)
+declaration structure AcceptanceConditions:
+  data opening_date content date
+  data current_date content date
+  data is_dependent_on_others_non_acceptance content boolean
+  data dependent_trigger_date content date
+
+declaration scope AcceptanceDeadlineCheck:
+  input conditions content AcceptanceConditions
+  output is_within_deadline content boolean
+
+scope AcceptanceDeadlineCheck:
+  # Розрахунок граничного строку для подання заяви нотаріусу
+  definition is_within_deadline =
+    if conditions.is_dependent_on_others_non_acceptance then
+      # Спеціальний строк: 3 місяці (ч. 2)
+      conditions.current_date <= conditions.dependent_trigger_date + 3 month
+    else
+      # Загальний строк: 6 місяців (ч. 1)
+      conditions.current_date <= conditions.opening_date + 6 month
+```
+
+---
+
+### Стаття 1273. Право на відмову від прийняття спадщини
+1. Спадкоємець за заповітом має право відмовитися від прийняття спадщини на користь іншого спадкоємця за заповітом.
+2. Спадкоємець за законом має право відмовитися від прийняття спадщини на користь будь-кого зі спадкоємців за законом незалежно від черги.
+5. Відмова від прийняття спадщини є безумовною і беззастережною.
+
+```catala
+# Перевірка законності відмови від спадщини (ст. 1273, 1268)
+declaration structure RejectionRequest:
+  data is_by_will content boolean
+  data target_heir_is_by_will content boolean
+  data target_heir_is_by_law content boolean
+  data submitted_within_6_months content boolean
+  data is_conditional content boolean
+
+declaration scope RejectionLegalityCheck:
+  input request content RejectionRequest
+  output is_valid_rejection content boolean
+
+scope RejectionLegalityCheck:
+  # Відмова дійсна, якщо подана вчасно, без умов/застережень,
+  # та на користь дозволеної категорії спадкоємців (ч. 1, 2, 5)
+  definition is_valid_rejection =
+    request.submitted_within_6_months and
+    not request.is_conditional and
+    (if request.is_by_will then
+       request.target_heir_is_by_will
+     else
+       request.target_heir_is_by_law)
+```
+

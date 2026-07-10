@@ -1,0 +1,172 @@
+# Глава 4. ЗАГАЛЬНІ ПОЛОЖЕННЯ ПРО ФІЗИЧНУ ОСОБУ
+
+## Стаття 24. Поняття фізичної особи
+
+1. Людина як учасник цивільних відносин вважається фізичною особою.
+
+---
+
+## Стаття 25. Цивільна правоздатність фізичної особи
+
+1. Здатність мати цивільні права та обов'язки (цивільну правоздатність) мають усі фізичні особи.
+2. Цивільна правоздатність фізичної особи виникає у момент її народження.
+3. У випадках, встановлених законом, здатність мати окремі цивільні права та обов'язки може пов'язуватися з досягненням фізичною особою відповідного віку.
+4. Цивільна правоздатність фізичної особи припиняється у момент її смерті.
+
+```catala
+# Правоздатність фізичної особи
+declaration structure LegalCapacityInfo:
+  data is_born content boolean
+  data is_deceased content boolean
+  data age content integer
+  data special_right_age_requirement content integer
+
+declaration scope LegalCapacityCheck:
+  input person content LegalCapacityInfo
+  output has_capacity content boolean
+  output has_special_right content boolean
+
+scope LegalCapacityCheck:
+  # Правоздатність виникає з народження та припиняється зі смертю
+  definition has_capacity =
+    person.is_born and not person.is_deceased
+
+  # Здатність мати окремі права може залежати від віку (ч. 3)
+  definition has_special_right =
+    person.is_born and not person.is_deceased and
+    person.age >= person.special_right_age_requirement
+```
+
+---
+
+## Стаття 30. Цивільна дієздатність фізичної особи
+
+1. Цивільну дієздатність має фізична особа, яка усвідомлює значення своїх дій та може керувати ними.
+Цивільною дієздатністю фізичної особи є її здатність своїми діями набувати для себе цивільних прав і самостійно їх здійснювати, а також здатність своїми діями створювати для себе цивільні обов'язки, самостійно їх виконувати та нести відповідальність у разі їх невиконання.
+
+---
+
+## Стаття 31. Часткова цивільна дієздатність фізичної особи, яка не досягла чотирнадцяти років
+
+1. Фізична особа, яка не досягла чотирнадцяти років (малолітня особа), має часткову цивільну дієздатність. Вона має право:
+   1) самостійно вчиняти дрібні побутові правочини;
+   2) здійснювати особисті немайнові права на результати інтелектуальної, творчої діяльності.
+
+---
+
+## Стаття 32. Неповна цивільна дієздатність фізичної особи у віці від чотирнадцяти до вісімнадцяти років
+
+1. Фізична особа у віці від чотирнадцяти до вісімнадцяти років (неповна дієздатність) має право:
+   1) самостійно розпоряджатися своїм заробітком, стипендією або іншими доходами;
+   2) здійснювати права інтелектуальної власності;
+   3) бути учасником (засновником) юридичних осіб, якщо це не заборонено законом;
+   4) самостійно укладати договір банківського вкладу та розпоряджатися ним.
+
+---
+
+## Стаття 34. Повна цивільна дієздатність
+
+1. Повну цивільну дієздатність має фізична особа, яка досягла вісімнадцяти років (повноліття).
+2. У разі реєстрації шлюбу фізичної особи, яка не досягла повноліття, вона набуває повної цивільної дієздатності з моменту реєстрації шлюбу.
+
+---
+
+## Стаття 35. Надання повної цивільної дієздатності (Емансипація)
+
+1. Повна цивільна дієздатність може бути надана фізичній особі, яка досягла шістнадцяти років і працює за трудовим договором, або яка бажає займатися підприємницькою діяльністю, або яка є матір'ю чи батьком дитини.
+
+---
+
+## Стаття 36. Обмеження цивільної дієздатності фізичної особи
+
+1. Суд може обмежити цивільну дієздатність фізичної особи, якщо вона страждає на психічний розлад, який істотно впливає на її здатність усвідомлювати значення своїх дій та (або) керувати ними, або якщо вона зловживає спиртними напоями, наркотичними засобами, токсичними речовинами тощо.
+
+---
+
+## Стаття 39. Визнання фізичної особи недієздатною
+
+1. Фізична особа може бути визнана судом недієздатною, якщо вона внаслідок хронічного, стійкого психічного розладу не здатна усвідомлювати значення своїх дій та (або) керувати ними.
+
+```catala
+# Визначення рівнів дієздатності
+declaration enumeration ActiveCapacity:
+  -- Partial       # Часткова (до 14 років)
+  -- Incomplete    # Неповна (від 14 до 18 років)
+  -- Full          # Повна
+  -- Limited       # Обмежена (за рішенням суду)
+  -- None          # Недієздатна (за рішенням суду)
+
+declaration structure PersonStatus:
+  data age content integer
+  data is_married content boolean
+  data has_been_emancipated content boolean               # надання дієздатності за ст. 35
+  data is_limited_by_court content boolean
+  data is_declared_incapable_by_court content boolean
+
+declaration scope ActiveCapacityDetermination:
+  input person content PersonStatus
+  output capacity content ActiveCapacity
+
+scope ActiveCapacityDetermination:
+  # Базове визначення дієздатності за віком
+  definition capacity =
+    if person.age < 14 then
+      ActiveCapacity.Partial
+    else if person.age < 18 then
+      ActiveCapacity.Incomplete
+    else
+      ActiveCapacity.Full
+
+  # Виняток: набуття повної дієздатності до 18 років (шлюб або емансипація)
+  exception definition capacity = ActiveCapacity.Full
+    under condition
+      person.age < 18 and (person.is_married or person.has_been_emancipated)
+    consequence equals ActiveCapacity.Full
+
+  # Виняток: обмежена дієздатність за рішенням суду (пріоритет над віковим правилом)
+  exception definition capacity = ActiveCapacity.Limited
+    under condition
+      person.is_limited_by_court
+    consequence equals ActiveCapacity.Limited
+
+  # Виняток: недієздатність за рішенням суду (найвищий пріоритет)
+  exception definition capacity = ActiveCapacity.None
+    under condition
+      person.is_declared_incapable_by_court
+    consequence equals ActiveCapacity.None
+
+
+# Перевірка дійсності правочинів залежно від дієздатності
+declaration structure TransactionDetails:
+  data is_small_household content boolean
+  data concerns_own_income content boolean
+  data concerns_intellectual_property content boolean
+  data is_banking_account_management content boolean
+  data has_parental_consent content boolean
+  data has_guardian_consent content boolean
+
+declaration scope TransactionValidityCheck:
+  input capacity content ActiveCapacity
+  input transaction content TransactionDetails
+  output is_valid content boolean
+
+scope TransactionValidityCheck:
+  definition is_valid =
+    match capacity with pattern
+      -- Full: true
+      -- Partial:
+         transaction.is_small_household or
+         transaction.concerns_intellectual_property
+      -- Incomplete:
+         transaction.is_small_household or
+         transaction.concerns_own_income or
+         transaction.concerns_intellectual_property or
+         transaction.is_banking_account_management or
+         transaction.has_parental_consent
+      -- Limited:
+         transaction.is_small_household or
+         transaction.has_guardian_consent
+      -- None:
+         # Повністю недієздатна особа самостійно не вчиняє правочини (тільки опікун)
+         transaction.has_guardian_consent
+```

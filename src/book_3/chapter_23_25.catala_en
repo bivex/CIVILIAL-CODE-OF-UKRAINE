@@ -1,0 +1,105 @@
+# Глава 23-25. ЗАГАЛЬНІ ПОЛОЖЕННЯ, НАБУТТЯ ТА ПРИПИНЕННЯ ПРАВА ВЛАСНОСТІ
+
+## Глава 23. Загальні положення про право власності
+
+### Стаття 316. Поняття права власності
+1. Правом власності є право особи на річ (майно), яке вона здійснює відповідно до закону за своєю волею, незалежно від волі інших осіб.
+
+### Стаття 317. Зміст права власності
+1. Власникові належать права володіння, користування та розпоряджання своїм майном.
+
+---
+
+## Глава 24. Набуття права власності
+
+### Стаття 337. Знахідка
+1. Особа, яка знайшла загублену річ, зобов'язана негайно повідомити про це особу, яка її загубила, або власника речі і повернути знайдено річ цій особі.
+Якщо особа, яка має право вимагати повернення загубленої речі, або її місцезнаходження невідомі, особа, яка знайшла річ, зобов'язана заявити про знахідку поліції або органові місцевого самоврядування.
+
+### Стаття 338. Набуття права власності на знахідку
+1. Якщо протягом шести місяців з моменту заявлення про знахідку поліції або органові місцевого самоврядування не буде встановлено власника або він не заявить про своє право на річ, особа, яка знайшла річ, набуває право власності на неї.
+2. Якщо особа, яка знайшла річ, подасть письмову заяву про відмову від набуття права власності на неї, річ переходить у власність територіальної громади.
+
+```catala
+# Знахідка речі (ст. 337, 338)
+declaration structure FindDetails:
+  data find_date content date
+  data current_date content date
+  data owner_identified content boolean
+  data finder_waives_ownership content boolean
+
+declaration enumeration FindOutcome:
+  -- ReturnToOwner
+  -- FinderAcquiresOwnership
+  -- CommunalProperty
+  -- Unknown
+
+declaration scope FindSettlement:
+  input find content FindDetails
+  output outcome content FindOutcome
+
+scope FindSettlement:
+  definition outcome =
+    if find.owner_identified then
+      FindOutcome.ReturnToOwner
+    else if find.current_date >= find.find_date + 6 month then
+      if find.finder_waives_ownership then
+        FindOutcome.CommunalProperty
+      else
+        FindOutcome.FinderAcquiresOwnership
+    else
+      FindOutcome.Unknown
+```
+
+### Стаття 343. Набуття права власності на скарб
+1. Скарбом є закопані у землі або приховані іншим способом гроші, валютні цінності, інші речі, власник яких невідомий або за законом втратив на них право власності.
+2. Особа, яка виявила скарб, набуває право власності на нього.
+Якщо скарб був виявлений у майні, що належить іншій особі, особа, яка виявила скарб, та власник цього майна набувають право спільної часткової власності на нього в рівних частках (50/50).
+3. У разі виявлення скарбу особою, яка здійснювала розкопки або пошук цінностей за своїми службовими обов'язками, право власності на скарб набуває власник майна, в якому був виявлений скарб (власник землі/будівлі - 100%, шукач - 0%).
+4. У разі виявлення скарбу, що має історичну, художню або іншу культурну цінність, він переходить у власність держави. Особа, яка виявила такий скарб, та власник майна, в якому він був прихований, мають право на одержання від держави винагороди у розмірі до 25 відсотків від його вартості (поділена 50/50).
+
+```catala
+# Розподіл власності на скарб (ст. 343)
+declaration structure TreasureDetails:
+  data found_value content money
+  data has_cultural_historical_value content boolean
+  data is_found_under_employment_duty content boolean
+
+declaration scope TreasureDistribution:
+  input treasure content TreasureDetails
+  output state_share content money
+  output landowner_share content money
+  output finder_share content money
+
+scope TreasureDistribution:
+  # Держава отримує скарб повністю, тільки якщо він є культурною цінністю (ч. 4)
+  definition state_share =
+    if treasure.has_cultural_historical_value then
+      treasure.found_value
+    else
+      $0.00
+
+  # Частка власника майна (землі/будівлі), де знайдено скарб
+  definition landowner_share =
+    if treasure.has_cultural_historical_value then
+      # Винагорода 25% ділиться навпіл
+      treasure.found_value * 12.5%
+    else if treasure.is_found_under_employment_duty then
+      # Якщо знайдено в межах службового завдання, власник отримує 100% скарбу
+      treasure.found_value
+    else
+      # Звичайний скарб: 50% власнику
+      treasure.found_value * 50%
+
+  # Частка особи, яка знайшла скарб (шукача)
+  definition finder_share =
+    if treasure.has_cultural_historical_value then
+      # Винагорода 25% ділиться навпіл
+      treasure.found_value * 12.5%
+    else if treasure.is_found_under_employment_duty then
+      # Службова особа-шукач не отримує нічого
+      $0.00
+    else
+      # Звичайний скарб: 50% шукачу
+      treasure.found_value * 50%
+```

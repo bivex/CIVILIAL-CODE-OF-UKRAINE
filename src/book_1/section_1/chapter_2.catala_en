@@ -1,0 +1,188 @@
+# Глава 2. ПІДСТАВИ ВИНИКНЕННЯ ЦИВІЛЬНИХ ПРАВ ТА ОБОВ'ЯЗКІВ. ЗДІЙСНЕННЯ ЦИВІЛЬНИХ ПРАВ ТА ВИКОНАННЯ ОБОВ'ЯЗКІВ
+
+## Стаття 11. Підстави виникнення цивільних прав та обов'язків
+
+1. Цивільні права та обов'язки виникають із дій осіб, що передбачені актами цивільного законодавства, а також із дій осіб, що не передбачені цими актами, але за аналогією породжують цивільні права та обов'язки.
+2. Підставами виникнення цивільних прав та обов'язків, зокрема, є:
+   1) договори та інші правочини;
+   2) створення літературних, художніх творів, винаходів та інших результатів інтелектуальної, творчої діяльності;
+   3) завдання майнової (матеріальної) та моральної шкоди іншій особі;
+   4) інші юридичні факти.
+3. Цивільні права та обов'язки можуть виникати безпосередньо з актів цивільного законодавства.
+4. У випадках, встановлених актами цивільного законодавства, цивільні права та обов'язки виникають безпосередньо з актів органів державної влади, органів влади Автономної Республіки Крим або органів місцевого самоврядування.
+5. У випадках, встановлених актами цивільного законодавства, цивільні права та обов'язки можуть виникати з рішення суду.
+6. У випадках, встановлених актами цивільного законодавства або договором, підставою виникнення цивільних прав та обов'язків може бути настання або ненастання певної події.
+
+```catala
+# Типи юридичних фактів (підстав)
+declaration enumeration LegalFactType:
+  -- ProvidedByLegislation
+  -- NonProvidedButAnalogy
+  -- ContractOrTransaction
+  -- IntellectualCreativeResult
+  -- DamageCaused
+  -- DirectLegislationAct
+  -- GovernmentOrLocalAuthorityAct
+  -- CourtDecision
+  -- EventOccurrence
+  -- EventNonOccurrence
+  -- OtherLegalFact
+
+declaration structure LegalFact:
+  data fact_type content LegalFactType
+  data is_established_by_law_or_contract content boolean
+
+declaration scope RightEmergenceCheck:
+  input fact content LegalFact
+  output can_emerge content boolean
+
+scope RightEmergenceCheck:
+  # За замовчуванням більшість визначених юридичних фактів породжують права
+  definition can_emerge =
+    match fact.fact_type with pattern
+      -- ProvidedByLegislation: true
+      -- ContractOrTransaction: true
+      -- IntellectualCreativeResult: true
+      -- DamageCaused: true
+      -- DirectLegislationAct: true
+      -- NonProvidedButAnalogy: true
+      -- OtherLegalFact: true
+      -- CourtDecision: fact.is_established_by_law_or_contract
+      -- GovernmentOrLocalAuthorityAct: fact.is_established_by_law_or_contract
+      -- EventOccurrence: fact.is_established_by_law_or_contract
+      -- EventNonOccurrence: fact.is_established_by_law_or_contract
+```
+
+---
+
+## Стаття 12. Здійснення цивільних прав
+
+1. Особа здійснює свої цивільні права вільно, на власний розсуд.
+2. Нездійснення особою своїх цивільних прав не є підставою для їх припинення, крім випадків, встановлених законом.
+3. Особа може відмовитися від свого майнового права.
+   Відмова від права власності на транспортні засоби, тварин, нерухомі речі здійснюється у порядку, встановленому актами цивільного законодавства.
+4. Особа може за відплатним або безвідплатним договором передати своє майнове право іншій особі, крім випадків, встановлених законом.
+5. Якщо законом встановлені правові наслідки недобросовісного або нерозумного здійснення особою свого права, вважається, що поведінка особи є добросовісною та розумною, якщо інше не встановлено судом.
+
+```catala
+# Презумпція добросовісності та розумності
+declaration structure BehaviorContext:
+  data has_court_proven_bad_faith content boolean
+  data has_court_proven_unreasonableness content boolean
+
+declaration scope GoodFaithPresumption:
+  input context content BehaviorContext
+  output is_good_faith_and_reasonable content boolean
+
+scope GoodFaithPresumption:
+  # Загальна презумпція
+  definition is_good_faith_and_reasonable = true
+
+  # Презумпція спростовується тільки рішенням суду
+  exception definition is_good_faith_and_reasonable = false
+    under condition
+      context.has_court_proven_bad_faith or
+      context.has_court_proven_unreasonableness
+    consequence equals false
+
+# Припинення та відмова від прав
+declaration structure RightExerciseInfo:
+  data was_not_exercised content boolean
+  data is_property_right content boolean
+  data is_special_item_type content boolean              # транспортний засіб, тварина, нерухомість
+  data special_abandonment_procedure_followed content boolean
+  data termination_established_by_law content boolean
+
+declaration scope RightTerminationCheck:
+  input exercise content RightExerciseInfo
+  output right_terminated content boolean
+
+scope RightTerminationCheck:
+  # Нездійснення права зазвичай не припиняє його
+  definition right_terminated = false
+
+  # Виняток 1: припинення через нездійснення встановлено законом
+  exception definition right_terminated = true
+    under condition
+      exercise.was_not_exercised and
+      exercise.termination_established_by_law
+    consequence equals true
+
+  # Виняток 2: відмова від майнового права
+  exception definition right_terminated = true
+    under condition
+      exercise.is_property_right and
+      (not exercise.is_special_item_type or exercise.special_abandonment_procedure_followed)
+    consequence equals true
+```
+
+---
+
+## Стаття 13. Межі здійснення цивільних прав
+
+1. Цивільні права особа здійснює у межах, наданих їй договором або актами цивільного законодавства.
+2. При здійсненні своїх прав особа зобов'язана утримуватися від дій, які могли б порушити права інших осіб, завдати шкоди довкіллю або культурній спадщині.
+3. Не допускаються дії особи, що вчиняються з наміром завдати шкоди іншій особі, а також зловживання правом в інших формах.
+4. При здійсненні цивільних прав особа повинна додержуватися моральних засад суспільства.
+5. Не допускаються використання цивільних прав з метою неправомірного обмеження конкуренції, зловживання монопольним становищем на ринку, а також недобросовісна конкуренція.
+6. У разі недодержання особою при здійсненні своїх прав вимог, які встановлені частинами другою - п'ятої цієї статті, суд може зобов'язати її припинити зловживання своїми правами, а також застосувати інші наслідки, встановлені законом.
+
+```catala
+# Перевірка зловживання правом / перевищення меж
+declaration structure ExerciseLimitsInfo:
+  data violates_rights_of_others content boolean
+  data harms_environment content boolean
+  data harms_cultural_heritage content boolean
+  data intends_to_harm_others content boolean
+  data complies_with_moral_principles content boolean
+  data limits_competition_unlawfully content boolean
+  data abuses_monopoly content boolean
+  data is_unfair_competition content boolean
+
+declaration scope AbuseOfRightCheck:
+  input limits content ExerciseLimitsInfo
+  output is_abuse content boolean
+
+scope AbuseOfRightCheck:
+  definition is_abuse =
+    limits.violates_rights_of_others or
+    limits.harms_environment or
+    limits.harms_cultural_heritage or
+    limits.intends_to_harm_others or
+    (not limits.complies_with_moral_principles) or
+    limits.limits_competition_unlawfully or
+    limits.abuses_monopoly or
+    limits.is_unfair_competition
+```
+
+---
+
+## Стаття 14. Виконання цивільних обов'язків
+
+1. Цивільні обов'язки виконуються у межах, встановлених договором або актом цивільного законодавства.
+2. Особа не може бути примушена до дій, вчинення яких не є обов'язковим для неї.
+3. Виконання цивільних обов'язків забезпечується засобами заохочення та відповідальністю, які встановлені договором або актом цивільного законодавства.
+4. Особа може бути звільнена від цивільного обов'язку або його виконання у випадках, встановлених договором або актами цивільного законодавства.
+
+```catala
+# Перевірка можливості примусу до виконання обов'язку
+declaration structure DutyExecution:
+  data is_obligatory_by_law content boolean
+  data is_obligatory_by_contract content boolean
+  data is_released_from_duty content boolean
+
+declaration scope ForceExecutionValidity:
+  input duty content DutyExecution
+  output can_be_forced content boolean
+
+scope ForceExecutionValidity:
+  # За замовчуванням примушувати не можна
+  definition can_be_forced = false
+
+  # Можна змусити, тільки якщо є обов'язок за законом або договором і особа не звільнена
+  exception definition can_be_forced = true
+    under condition
+      (duty.is_obligatory_by_law or duty.is_obligatory_by_contract) and
+      not duty.is_released_from_duty
+    consequence equals true
+```
