@@ -1,0 +1,48 @@
+# ГЛАВА 6. Процесуальні строки (ст. 120-124)
+
+# Обчислення процесуальних строків
+declaration structure DeadlineDetails:
+  data start_date content date
+  data duration_days content integer
+  data duration_months content integer
+  data current_date content date
+  data post_stamp_date content date
+  data was_sent_by_post content boolean
+  data end_day_is_weekend_or_holiday content boolean
+  data next_working_day content date
+  data submitted_in_person_after_court_hours content boolean
+
+declaration scope ProceduralDeadlineCheck:
+  input details content DeadlineDetails
+  output final_deadline_date content date
+  output is_missed content boolean
+
+scope ProceduralDeadlineCheck:
+  # Початок перебігу починається на наступний день після стартової дати (ст. 123)
+  let effective_start_date = details.start_date + 1 day
+
+  # Базова кінцева дата розраховується додаванням тривалості
+  let base_end_date =
+    if details.duration_months > 0 then
+      effective_start_date + details.duration_months month
+    else
+      effective_start_date + details.duration_days day
+
+  # Якщо кінцевий день припадає на вихідний або свято, то він переноситься на перший робочий день (ч. 3 ст. 124)
+  definition final_deadline_date =
+    if details.end_day_is_weekend_or_holiday then
+      details.next_working_day
+    else
+      base_end_date
+
+  # Перевірка пропущення строку (ч. 5, 6 ст. 124)
+  definition is_missed =
+    if details.was_sent_by_post then
+      # Якщо відправлено поштою, дата поштового штемпеля має бути в межах строку (ч. 6)
+      details.post_stamp_date > final_deadline_date
+    else if details.submitted_in_person_after_court_hours then
+      # Якщо подано особисто, але після закінчення робочого часу суду (ч. 5)
+      true
+    else
+      details.current_date > final_deadline_date
+```

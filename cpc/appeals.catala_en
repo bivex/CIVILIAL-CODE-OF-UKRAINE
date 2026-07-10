@@ -1,0 +1,94 @@
+# Апеляційне та касаційне оскарження (ст. 354, 390)
+
+declaration structure CourtDecision:
+  data is_ruling content boolean                          # ухвала суду (true) або рішення (false)
+  data public_announcement_date content date
+  data was_short_decision_only content boolean
+  data full_decision_date content date
+  data actual_delivery_date content date
+  data was_delivered_on_announcement_day content boolean
+  data appeal_submission_date content date
+
+declaration scope AppealDeadlineCheck:
+  input decision content CourtDecision
+  output appeal_deadline_duration_days content integer
+  output appeal_start_date content date
+  output appeal_due_date content date
+  output is_entitled_to_extension content boolean
+  output extension_due_date content date
+  output is_appeal_timely content boolean
+
+scope AppealDeadlineCheck:
+  # Строк оскарження: 30 днів для рішення, 15 днів для ухвали (ч. 1 ст. 354)
+  definition appeal_deadline_duration_days =
+    if decision.is_ruling then
+      15
+    else
+      30
+
+  # Строк обчислюється з дня проголошення або складення повного рішення (ч. 1 ст. 354)
+  definition appeal_start_date =
+    if decision.was_short_decision_only then
+      decision.full_decision_date
+    else
+      decision.public_announcement_date
+
+  # Базовий кінцевий термін для подання апеляції
+  definition appeal_due_date =
+    appeal_start_date + appeal_deadline_duration_days day
+
+  # Право на поновлення строку при несвоєчасному отриманні копії рішення (ч. 2 ст. 354)
+  definition is_entitled_to_extension =
+    not decision.was_delivered_on_announcement_day
+
+  # Новий термін при врученні копії пізніше (30/15 днів з дати вручення) (ч. 2 ст. 354)
+  definition extension_due_date =
+    decision.actual_delivery_date + appeal_deadline_duration_days day
+
+  # Чи подано апеляцію вчасно
+  definition is_appeal_timely =
+    if decision.appeal_submission_date <= appeal_due_date then
+      true
+    else if is_entitled_to_extension and decision.appeal_submission_date <= extension_due_date then
+      true
+    else
+      false
+
+# Касаційне оскарження (ст. 390)
+declaration structure CassationCase:
+  data decision_announcement_date content date
+  data was_short_decision_only content boolean
+  data full_decision_date content date
+  data actual_delivery_date content date
+  data was_delivered_on_announcement_day content boolean
+  data cassation_submission_date content date
+
+declaration scope CassationDeadlineCheck:
+  input info content CassationCase
+  output cassation_due_date content date
+  output extension_due_date content date
+  output is_cassation_timely content boolean
+
+scope CassationDeadlineCheck:
+  # Касаційна скарга на рішення подається протягом тридцяти днів (ч. 1 ст. 390)
+  let base_start_date =
+    if info.was_short_decision_only then
+      info.full_decision_date
+    else
+      info.decision_announcement_date
+
+  definition cassation_due_date =
+    base_start_date + 30 day
+
+  # Поновлення строку при несвоєчасному отриманні копії (ч. 2 ст. 390)
+  definition extension_due_date =
+    info.actual_delivery_date + 30 day
+
+  definition is_cassation_timely =
+    if info.cassation_submission_date <= cassation_due_date then
+      true
+    else if not info.was_delivered_on_announcement_day and info.cassation_submission_date <= extension_due_date then
+      true
+    else
+      false
+```

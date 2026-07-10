@@ -1,0 +1,6 @@
+# CIVIL PROCEDURE CODE OF UKRAINE (ЦИВІЛЬНИЙ ПРОЦЕСУАЛЬНИЙ КОДЕКС УКРАЇНИ)
+
+This is the main entry point for the Civil Procedure Code of Ukraine, modeled in Catala.
+
+> Include: deadlines.catala_en
+> Include: appeals.catala_en
