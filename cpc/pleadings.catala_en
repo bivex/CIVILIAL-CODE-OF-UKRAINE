@@ -33,3 +33,34 @@ scope DefenseFilingCheck:
     in
     filing.actual_submission_date <= effective_deadline
 ```
+
+---
+
+## Стаття 186. Відмова у відкритті провадження у справі
+1. Суддя відмовляє у відкритті провадження у справі, якщо:
+   1) заява не підлягає розгляду в порядку цивільного судочинства;
+   2) є рішення суду між тими самими сторонами, про той самий предмет і з тих самих підстав;
+   6) настала смерть фізичної особи або припинено юрособу, якщо спірні відносини не допускають правонаступництва.
+
+```catala
+# Перевірка підстав для відмови у відкритті провадження (ст. 186)
+declaration structure CaseOpeningRequest:
+  data is_civil_jurisdiction content boolean
+  data has_binding_decision_same_parties_and_subject content boolean
+  data has_pending_case_same_parties_and_subject content boolean
+  data party_deceased_or_liquidated content boolean
+  data allows_succession content boolean
+
+declaration scope OpenProceedingsCheck:
+  input request content CaseOpeningRequest
+  output must_refuse content boolean
+
+scope OpenProceedingsCheck:
+  # Наявність обставин для обов'язкової відмови у відкритті справи
+  definition must_refuse =
+    not request.is_civil_jurisdiction or
+    request.has_binding_decision_same_parties_and_subject or
+    request.has_pending_case_same_parties_and_subject or
+    (request.party_deceased_or_liquidated and not request.allows_succession)
+```
+

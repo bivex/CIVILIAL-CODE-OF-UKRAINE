@@ -41,3 +41,64 @@ scope CourtCostsAllocation:
   definition other_costs_charged_to_plaintiff =
     resolution.other_costs_paid - other_costs_charged_to_defendant
 ```
+
+---
+
+## Стаття 148. Штраф
+1. Суд може постановити ухвалу про стягнення в дохід державного бюджету з відповідної особи штрафу у сумі від 0,3 до трьох розмірів прожиткового мінімуму для працездатних осіб у випадках невиконання обов'язків, зловживання правами, або неподання доказів.
+2. У випадку повторного чи систематичного порушення суд стягує штраф у сумі від одного до десяти розмірів прожиткового мінімуму для працездатних осіб.
+6. Суд може скасувати постановлену ним ухвалу про стягнення штрафу, якщо особа виправила порушення або надала докази поважності причин невиконання.
+
+```catala
+# Розрахунок судового штрафу (ст. 148)
+declaration structure FineDetails:
+  data living_wage_amount content money
+  data failure_to_perform_duties content boolean
+  data abuse_of_rights content boolean
+  data failure_to_provide_evidence content boolean
+  data failure_to_comply_with_injunction content boolean
+  data is_repeated_or_systematic content boolean
+  data was_violation_corrected content boolean
+  data respectful_reasons_provided content boolean
+
+declaration scope CourtFineCheck:
+  input details content FineDetails
+  output min_fine content money
+  output max_fine content money
+  output actual_fine_range_applies content boolean
+  output is_cancelled content boolean
+
+scope CourtFineCheck:
+  # Наявність порушень для накладення штрафу
+  let has_violation =
+    details.failure_to_perform_duties or
+    details.abuse_of_rights or
+    details.failure_to_provide_evidence or
+    details.failure_to_comply_with_injunction
+
+  definition actual_fine_range_applies =
+    has_violation and not details.was_violation_corrected
+
+  # Межі штрафів: для повторних 1-10, для перших 0.3-3 прожиткових мінімумів (ч. 1, 2)
+  definition min_fine =
+    if not actual_fine_range_applies then
+      $0.00
+    else if details.is_repeated_or_systematic then
+      details.living_wage_amount * 1.0
+    else
+      details.living_wage_amount * 0.3
+
+  definition max_fine =
+    if not actual_fine_range_applies then
+      $0.00
+    else if details.is_repeated_or_systematic then
+      details.living_wage_amount * 10.0
+    else
+      details.living_wage_amount * 3.0
+
+  # Скасування штрафу за ч. 6
+  definition is_cancelled =
+    has_violation and
+    (details.was_violation_corrected or details.respectful_reasons_provided)
+```
+
