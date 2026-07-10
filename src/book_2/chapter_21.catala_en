@@ -122,3 +122,39 @@ scope DonorEligibilityCheck:
       # Після смерті - тільки за наявності дозволу закону або письмової згоди за життя
       donor.law_allows_post_mortem or donor.written_consent_provided
 ```
+
+---
+
+## Стаття 285. Право на інформацію про стан свого здоров'я
+1. Повнолітня фізична особа має право на достовірну і повну інформацію про стан свого здоров'я, у тому числі на ознайомлення з відповідними медичними документами.
+2. Фізична особа, яка досягла чотирнадцяти років, має право на інформацію про стан свого здоров'я.
+3. Батьки (усиновлювачі), опікун, піклувальник мають право на інформацію про стан здоров'я дитини або підопічного.
+4. Якщо інформація про хворобу фізичної особи може погіршити стан її здоров'я або погіршити стан здоров'я фізичних осіб, визначених частиною третьою цієї статті, зашкодити процесові лікування, медичні працівники мають право надати неповну інформацію про стан здоров'я фізичної особи, обмежити можливість ознайомлення з окремими медичними документами.
+
+```catala
+# Логіка доступу до медичної інформації (ст. 285)
+declaration structure MedicalInfoRequest:
+  data requester_age content integer
+  data requester_is_parent_or_guardian content boolean
+  data requester_is_patient content boolean
+  data disclosure_can_harm_health content boolean
+
+declaration scope MedicalInfoDisclosure:
+  input request content MedicalInfoRequest
+  output can_disclose_full_info content boolean
+  output can_disclose_limited_info content boolean
+
+scope MedicalInfoDisclosure:
+  # Повна інформація надається повнолітньому пацієнту або батькам (ч. 1, 3)
+  definition can_disclose_full_info =
+    not request.disclosure_can_harm_health and
+    ((request.requester_is_patient and request.requester_age >= 18) or
+     request.requester_is_parent_or_guardian)
+
+  # Неповна інформація може надаватися пацієнтам від 14 років або при загрозі здоров'ю (ч. 2, 4)
+  definition can_disclose_limited_info =
+    (request.requester_is_patient and request.requester_age >= 14) or
+    request.requester_is_parent_or_guardian or
+    (request.disclosure_can_harm_health and request.requester_is_patient and request.requester_age >= 18)
+```
+

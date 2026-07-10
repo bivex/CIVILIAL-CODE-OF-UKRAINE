@@ -33,3 +33,57 @@ scope ReplacementLegality:
     replacement.performed_to_original_creditor and
     not replacement.debtor_notified_in_writing
 ```
+
+---
+
+## Стаття 534. Черговість погашення вимог за грошовим зобов'язанням
+1. У разі недостатності суми проведеного платежу для виконання грошового зобов'язання у повному обсязі ця сума погашає вимоги кредитора у такій черговості, якщо інше не встановлено договором або законом:
+   1) у першу чергу - сплачуються витрати кредитора, пов'язані з одержанням виконання;
+   2) у другу чергу - сплачуються проценти та неустойка;
+   3) у третю чергу - сплачується основна сума боргу.
+
+```catala
+# Розподіл платежу при недостатності коштів (ст. 534)
+declaration structure PaymentDetails:
+  data paid_amount content money
+  data creditor_expenses content money
+  data interest_and_penalty content money
+  data main_debt content money
+
+declaration scope PaymentAllocation:
+  input payment content PaymentDetails
+  output expenses_paid content money
+  output interest_and_penalty_paid content money
+  output main_debt_paid content money
+  output remaining_unpaid_debt content money
+
+scope PaymentAllocation:
+  # 1. Погашення витрат кредитора
+  definition expenses_paid =
+    if payment.paid_amount >= payment.creditor_expenses then
+      payment.creditor_expenses
+    else
+      payment.paid_amount
+
+  let after_expenses = payment.paid_amount - expenses_paid
+
+  # 2. Погашення відсотків та неустойки
+  definition interest_and_penalty_paid =
+    if after_expenses >= payment.interest_and_penalty then
+      payment.interest_and_penalty
+    else
+      after_expenses
+
+  let after_interest = after_expenses - interest_and_penalty_paid
+
+  # 3. Погашення основного боргу
+  definition main_debt_paid =
+    if after_interest >= payment.main_debt then
+      payment.main_debt
+    else
+      after_interest
+
+  definition remaining_unpaid_debt =
+    payment.main_debt - main_debt_paid
+```
+

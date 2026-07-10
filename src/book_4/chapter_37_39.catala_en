@@ -63,3 +63,27 @@ scope PatentValidityCheck:
       -- TreeOrGrapeVariety:
          patent.current_date <= patent.filing_date + 35 year
 ```
+
+---
+
+## Стаття 459. Умови патентоздатності винаходу
+1. Винахід відповідає умовам патентоздатності, якщо він є новим, має винахідницький рівень і є промислово придатним.
+
+```catala
+# Критерії патентоздатності винаходу (ст. 459)
+declaration structure InventionCriteria:
+  data is_new content boolean
+  data has_inventive_step content boolean
+  data is_industrially_applicable content boolean
+
+declaration scope InventionPatentabilityCheck:
+  input criteria content InventionCriteria
+  output is_patentable content boolean
+
+scope InventionPatentabilityCheck:
+  definition is_patentable =
+    criteria.is_new and
+    criteria.has_inventive_step and
+    criteria.is_industrially_applicable
+```
+

@@ -54,3 +54,32 @@ scope DelictLiabilityCheck:
     delict.is_unlawful_action and 
     (delict.is_caused_by_source_of_extreme_danger or delict.is_unlawful_prosecution)
 ```
+
+---
+
+## Стаття 1195. Визначення розміру відшкодування шкоди, завданої каліцтвом або іншим ушкодженням здоров'я
+1. Фізична особа, яка постраждала від каліцтва чи іншого ушкодження здоров'я, має право на відшкодування їй заробітку (доходу), втраченого нею внаслідок втрати або зменшення професійної чи загальної працездатності.
+   * Розмір відшкодування розраховується у відсотках від середньомісячного заробітку потерпілого до каліцтва відповідно до ступеня втрати професійної працездатності.
+
+```catala
+# Розрахунок компенсації при втраті працездатності (ст. 1195)
+declaration structure CapacityLossCase:
+  data average_monthly_wage content money
+  data loss_of_capacity_percentage content decimal
+  data expenses_for_treatment content money
+
+declaration scope CapacityLossCompensation:
+  input case content CapacityLossCase
+  output monthly_compensation_amount content money
+  output total_immediate_compensation content money
+
+scope CapacityLossCompensation:
+  # Щомісячна компенсація втраченого заробітку (ч. 1)
+  definition monthly_compensation_amount =
+    case.average_monthly_wage * case.loss_of_capacity_percentage
+
+  # Одноразова компенсація додаткових витрат на лікування
+  definition total_immediate_compensation =
+    case.expenses_for_treatment
+```
+

@@ -48,3 +48,42 @@ scope PropertyVindication:
         not case.left_possession_against_will))                                 # вибуло з волі власника
     consequence equals false
 ```
+
+---
+
+## Стаття 390. Розрахунки при витребуванні майна із чужого незаконного володіння
+1. Власник майна має право вимагати від особи, яка знала або могла знати, що її володіння майном незаконне (недобросовісного володільця), повернення або відшкодування всіх доходів, які вона одержала або могла одержати за весь час володіння.
+2. Власник майна має право вимагати від добросовісного володільця повернення всіх доходів, які він одержав або міг одержати з часу, коли дізнався чи міг дізнатися про незаконність володіння або з дня отримання судової повістки.
+3. Володілець (добросовісний або недобросовісний) має право вимагати від власника майна відшкодування необхідних витрат на утримання, збереження майна, здійснених ним з часу, з якого власнику належать доходи від майна.
+
+```catala
+# Розрахунки доходів та витрат при витребуванні майна (ст. 390)
+declaration structure VindicationSettlementDetails:
+  data is_bad_faith_possessor content boolean
+  data total_income_received content money
+  data income_received_after_notice content money
+  data necessary_maintenance_expenses content money
+
+declaration scope VindicationSettlement:
+  input details content VindicationSettlementDetails
+  output owner_entitled_income content money
+  output possessor_entitled_expense_refund content money
+  output net_balance content money
+
+scope VindicationSettlement:
+  # Доходи власнику: недобросовісний повертає за весь час, добросовісний - тільки після повідомлення (ч. 1, 2)
+  definition owner_entitled_income =
+    if details.is_bad_faith_possessor then
+      details.total_income_received
+    else
+      details.income_received_after_notice
+
+  # Витрати володільцю: відшкодовуються आवश्यक витрати обом категоріям (ч. 3)
+  definition possessor_entitled_expense_refund =
+    details.necessary_maintenance_expenses
+
+  # Сальдо розрахунків (хто кому винен)
+  definition net_balance =
+    owner_entitled_income - possessor_entitled_expense_refund
+```
+

@@ -131,3 +131,70 @@ scope LegalPersonTermination:
       -- Transformation: false
       -- Liquidation: true
 ```
+
+---
+
+## Стаття 112. Черговість задоволення вимог кредиторів
+1. У разі ліквідації платоспроможної юридичної особи вимоги її кредиторів задовольняються у такій черговості:
+   1) у першу чергу - задовольняються вимоги щодо відшкодування шкоди, завданої каліцтвом, іншим ушкодженням здоров'я або смертю, та вимоги кредиторів, забезпечені заставою чи іншим способом;
+   2) у другу чергу - задовольняються вимоги працівників, пов'язані з трудовими відносинами, вимоги автора про виплату авторської винагороди;
+   3) у третю чергу - задовольняються вимоги щодо податків, зборів (обов'язкових платежів);
+   4) у четверту чергу - задовольняються всі інші вимоги.
+2. Вимоги кожної наступної черги задовольняються після повного задоволення вимог попередньої черги.
+
+```catala
+# Розподіл ліквідаційних коштів між кредиторами (ст. 112)
+declaration structure LiquidationFunds:
+  data total_assets content money
+  data first_order_claims content money
+  data second_order_claims content money
+  data third_order_claims content money
+  data fourth_order_claims content money
+
+declaration scope LiquidationDistribution:
+  input info content LiquidationFunds
+  output first_order_paid content money
+  output second_order_paid content money
+  output third_order_paid content money
+  output fourth_order_paid content money
+  output remaining_assets content money
+
+scope LiquidationDistribution:
+  # 1. Задоволення першої черги (шкода здоров'ю, застава)
+  definition first_order_paid =
+    if info.total_assets >= info.first_order_claims then
+      info.first_order_claims
+    else
+      info.total_assets
+
+  let assets_after_first = info.total_assets - first_order_paid
+
+  # 2. Задоволення другої черги (зарплати, роялті)
+  definition second_order_paid =
+    if assets_after_first >= info.second_order_claims then
+      info.second_order_claims
+    else
+      assets_after_first
+
+  let assets_after_second = assets_after_first - second_order_paid
+
+  # 3. Задоволення третьої черги (податки, бюджет)
+  definition third_order_paid =
+    if assets_after_second >= info.third_order_claims then
+      info.third_order_claims
+    else
+      assets_after_second
+
+  let assets_after_third = assets_after_second - third_order_paid
+
+  # 4. Задоволення четвертої черги (інші кредитори)
+  definition fourth_order_paid =
+    if assets_after_third >= info.fourth_order_claims then
+      info.fourth_order_claims
+    else
+      assets_after_third
+
+  definition remaining_assets =
+    assets_after_third - fourth_order_paid
+```
+
