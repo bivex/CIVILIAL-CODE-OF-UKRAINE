@@ -86,3 +86,41 @@ scope LoanInterestCheck:
       loan.nbu_discount_rate
 ```
 
+---
+
+## Стаття 762. Плата за користування майном
+4. Наймач має право вимагати зменшення плати, якщо через обставини, за які він не відповідає, можливість користування майном істотно зменшилася.
+6. Наймач звільняється від плати за весь час, протягом якого майно не могло бути використане ним через обставини, за які він не відповідає.
+
+```catala
+# Розрахунок плати за найм (оренду) (ст. 762)
+declaration structure LeaseDetails:
+  data agreed_rent_amount content money
+  data use_possibility_decreased_significantly content boolean
+  data cannot_use_property_at_all content boolean
+  data tenant_responsible_for_impossibility content boolean
+
+declaration scope LeasePaymentCheck:
+  input lease content LeaseDetails
+  output rent_to_pay content money
+  output is_exempt content boolean
+
+scope LeasePaymentCheck:
+  # Звільнення від плати, якщо майно не могло бути використане без вини орендаря (ч. 6)
+  definition is_exempt =
+    lease.cannot_use_property_at_all and
+    not lease.tenant_responsible_for_impossibility
+
+  # Розрахунок плати за найм
+  definition rent_to_pay =
+    if is_exempt then
+      $0.00
+    else if lease.use_possibility_decreased_significantly and not lease.tenant_responsible_for_impossibility then
+      # У разі істотного зменшення можливості використання плата зменшується (ч. 4)
+      # За замовчуванням зменшуємо на 50%
+      lease.agreed_rent_amount * 50%
+    else
+      lease.agreed_rent_amount
+```
+
+
