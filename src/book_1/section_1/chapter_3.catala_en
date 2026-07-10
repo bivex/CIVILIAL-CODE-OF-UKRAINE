@@ -200,3 +200,50 @@ scope MoralDamagePayoutCheck:
       state.otherwise_established_by_law_or_contract
     consequence equals true
 ```
+
+---
+
+## Стаття 257-258. Позовна давність
+1. Загальна позовна давність встановлюється тривалістю у три роки.
+2. Спеціальна позовна давність в один рік застосовується, зокрема, до вимог про стягнення неустойки (штрафу, пені), про спростування недостовірної інформації, про розірвання договору дарування тощо.
+
+## Стаття 263. Зупинення перебігу позовної давності
+1. Перебіг позовної давності зупиняється:
+   1) якщо пред'явленню позову перешкоджала надзвичайна або невідворотна за даних умов подія (непереборна сила);
+   2) у разі відстрочення виконання зобов'язання (мораторій);
+   3) якщо позивач або відповідач перебуває у складі Збройних Сил України або інших військових формувань під час воєнного стану.
+
+```catala
+# Перевірка спливу позовної давності (ст. 257, 258, 263)
+declaration structure LawsuitTiming:
+  data months_since_violation content integer
+  data is_special_one_year_claim content boolean
+  
+  # Обставини зупинення (ст. 263)
+  data force_majeure_active_months content integer
+  data moratorium_active_months content integer
+  data military_service_in_martial_law_months content integer
+
+declaration scope StatuteOfLimitationsCheck:
+  input timing content LawsuitTiming
+  output claim_expired content boolean
+
+scope StatuteOfLimitationsCheck:
+  # Розрахунок загального часу зупинення давності (ст. 263)
+  let suspension_months =
+    timing.force_majeure_active_months +
+    timing.moratorium_active_months +
+    timing.military_service_in_martial_law_months
+
+  # Ефективний строк давності після вирахування періодів зупинення
+  let effective_elapsed_months = timing.months_since_violation - suspension_months
+
+  definition claim_expired =
+    if timing.is_special_one_year_claim then
+      # Спеціальна давність - 1 рік (12 місяців)
+      effective_elapsed_months > 12
+    else
+      # Загальна давність - 3 роки (36 місяців)
+      effective_elapsed_months > 36
+```
+

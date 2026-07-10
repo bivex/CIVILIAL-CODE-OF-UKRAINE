@@ -38,3 +38,51 @@ scope ContractConclusionCheck:
     (not info.requires_property_transfer or info.property_transferred) and
     (not info.requires_registration or info.registered)
 ```
+
+---
+
+## Стаття 1048. Проценти за договором позики
+1. Позикодавець має право на одержання від позичальника процентів на суму позики, якщо інше не встановлено договором або законом. Розмір і порядок одержання процентів встановлюються договором.
+   Якщо договором не встановлений розмір процентів, їх розмір визначається на рівні облікової ставки Національного банку України.
+2. Договір позики вважається безпроцентним, якщо:
+   1) він укладений між фізичними особами на суму, яка не перевищує п'ятдесятикратного розміру неоподатковуваного мінімуму доходів громадян, і не пов'язаний із провадженням підприємницької діяльності хоча б однією із сторін;
+   2) позичальникові передані речі, визначені родовими ознаками.
+
+```catala
+# Розрахунок відсотків за договором позики (ст. 1048)
+declaration structure LoanDetails:
+  data amount content money
+  data nontaxable_minimum content money
+  data is_between_physical_persons content boolean
+  data is_entrepreneurial content boolean
+  data is_generic_things content boolean
+  data interest_rate_agreed content boolean
+  data contract_rate content decimal
+  data nbu_discount_rate content decimal
+
+declaration scope LoanInterestCheck:
+  input loan content LoanDetails
+  output is_interest_free content boolean
+  output applicable_rate content decimal
+
+scope LoanInterestCheck:
+  # Ліміт для безвідсоткової позики: 50 * неоподатковуваний мінімум
+  let fifty_minimums = loan.nontaxable_minimum * 50
+
+  # Договір вважається безпроцентним за законом у двох випадках (ч. 2)
+  definition is_interest_free =
+    loan.is_generic_things or
+    (loan.is_between_physical_persons and
+     not loan.is_entrepreneurial and
+     loan.amount <= fifty_minimums)
+
+  # Розрахунок відсоткової ставки (ч. 1)
+  definition applicable_rate =
+    if is_interest_free then
+      0.0%
+    else if loan.interest_rate_agreed then
+      loan.contract_rate
+    else
+      loan.nbu_discount_rate
+```
+
