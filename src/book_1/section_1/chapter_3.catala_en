@@ -247,3 +247,29 @@ scope StatuteOfLimitationsCheck:
       effective_elapsed_months > 36
 ```
 
+---
+
+## Стаття 19. Самозахист цивільних прав
+1. Особа має право на самозахист свого цивільного права та права іншої особи від порушень і протиправних посягань.
+2. Самозахистом є застосування особою засобів протидії, які не заборонені законом та не суперечать моральним засадам суспільства.
+3. Засоби самозахисту мають відповідати характеру порушення та наслідкам, які були завдані порушенням.
+
+```catala
+# Самозахист цивільних прав (ст. 19)
+declaration structure SelfDefenseAction:
+  data method_prohibited_by_law content boolean
+  data method_violates_morals content boolean
+  data is_proportionate content boolean
+
+declaration scope SelfDefenseCheck:
+  input action content SelfDefenseAction
+  output is_lawful_self_defense content boolean
+
+scope SelfDefenseCheck:
+  definition is_lawful_self_defense =
+    not action.method_prohibited_by_law and
+    not action.method_violates_morals and
+    action.is_proportionate
+```
+
+

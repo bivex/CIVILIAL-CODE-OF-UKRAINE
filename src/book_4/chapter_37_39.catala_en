@@ -87,3 +87,32 @@ scope InventionPatentabilityCheck:
     criteria.is_industrially_applicable
 ```
 
+---
+
+## Стаття 460-461. Умови патентоздатності корисної моделі та промислового зразка
+1. Корисна модель відповідає умовам патентоздатності, якщо вона є новою і є промислово придатною (ст. 460).
+2. Промисловий зразок відповідає умовам патентоздатності, якщо він є новим (ст. 461).
+
+```catala
+# Критерії патентоздатності для інших об'єктів (ст. 460, 461)
+declaration structure UtilityOrDesignCriteria:
+  data is_utility_model content boolean
+  data is_industrial_design content boolean
+  data is_new content boolean
+  data is_industrially_applicable content boolean
+
+declaration scope PatentabilityCheck:
+  input info content UtilityOrDesignCriteria
+  output is_patentable content boolean
+
+scope PatentabilityCheck:
+  definition is_patentable =
+    if info.is_utility_model then
+      info.is_new and info.is_industrially_applicable
+    else if info.is_industrial_design then
+      info.is_new
+    else
+      false
+```
+
+

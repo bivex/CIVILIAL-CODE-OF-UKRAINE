@@ -198,3 +198,48 @@ scope LiquidationDistribution:
     assets_after_third - fourth_order_paid
 ```
 
+---
+
+## Стаття 97-98. Загальні збори товариства та прийняття рішень
+1. Управління товариством здійснюють його органи. Вищим органом товариства є загальні збори його учасників (ст. 97).
+2. Загальні збори учасників мають кворум, якщо в них беруть участь учасники, що володіють більше ніж 50 відсотками голосів (якщо статутом не встановлено інший кворум).
+3. Рішення загальних зборів приймаються простою більшістю голосів присутніх учасників, крім рішень про внесення змін до статуту товариства, відчуження майна товариства на суму, що становить п'ятдесят і більше відсотків майна товариства, та про ліквідацію товариства, які приймаються більшістю не менш як у 3/4 голосів, якщо інше не встановлено законом.
+
+```catala
+# Прийняття рішень загальними зборами (ст. 98)
+declaration structure MeetingDetails:
+  data total_votes_in_society content decimal
+  data votes_present content decimal
+  data votes_forcontent decimal
+  data is_charter_change_or_liquidation content boolean
+  data custom_quorum_limit_agreed content boolean
+  data custom_quorum_limit content decimal
+
+declaration scope CorporateMeetingCheck:
+  input meeting content MeetingDetails
+  output has_quorum content boolean
+  output decision_passed content boolean
+
+scope CorporateMeetingCheck:
+  # Визначення кворуму зборів
+  definition has_quorum =
+    let quorum_limit =
+      if meeting.custom_quorum_limit_agreed then
+        meeting.custom_quorum_limit
+      else
+        50.0%
+    in
+    (meeting.votes_present / meeting.total_votes_in_society) > quorum_limit
+
+  # Визначення більшості для прийняття рішення
+  definition decision_passed =
+    has_quorum and
+    (if meeting.is_charter_change_or_liquidation then
+       # Кваліфікована більшість - 3/4 (75%) голосів присутніх
+       (meeting.votes_for / meeting.votes_present) >= 75.0%
+     else
+       # Проста більшість - більше 50% голосів присутніх
+       (meeting.votes_for / meeting.votes_present) > 50.0%)
+```
+
+

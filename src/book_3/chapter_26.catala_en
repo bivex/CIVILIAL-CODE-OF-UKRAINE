@@ -34,3 +34,33 @@ scope PreemptiveRightCheck:
     else
       proposal.current_date > proposal.notice_date + 10 day
 ```
+
+---
+
+## Стаття 370, 372. Визначення часток та поділ майна, що є у спільній сумісній власності
+1. У разі поділу майна, що є у спільній сумісній власності, частки співвласників у право спільної сумісної власності є рівними, якщо інше не встановлено домовленістю між ними або законом (ст. 372).
+
+```catala
+# Визначення часток при поділі спільної сумісної власності (ст. 370, 372)
+declaration structure JointDivisionDetails:
+  data co_owners_count content integer
+  data custom_agreement_active content boolean
+  data custom_shares content decimal
+
+declaration scope JointPropertyDivision:
+  input details content JointDivisionDetails
+  output individual_share content decimal
+
+scope JointPropertyDivision:
+  # За замовчуванням частки співвласників є рівними (ч. 1 ст. 372)
+  # Тобто 1.0 (100%) ділиться на кількість співвласників
+  definition individual_share =
+    1.0 / details.co_owners_count
+
+  # Виняток: діє письмова домовленість сторін
+  exception definition individual_share = details.custom_shares
+    under condition
+      details.custom_agreement_active
+    consequence equals details.custom_shares
+```
+

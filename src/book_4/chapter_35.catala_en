@@ -33,3 +33,25 @@ scope IPUsePermittedCheck:
     request.has_owner_consent or
     request.is_statutory_free_use
 ```
+
+---
+
+## Стаття 1107. Розпоряджання майновими правами інтелектуальної власності
+1. Договір щодо розпоряджання майновими правами інтелектуальної власності укладається в письмовій формі.
+2. У разі недодержання письмової форми договору щодо розпоряджання майновими правами інтелектуальної власності такий договір є нікчемним.
+
+```catala
+# Перевірка дійсності договорів розпоряджання правами ІВ (ст. 1107)
+declaration structure LicenseContractDetails:
+  data is_written_form content boolean
+
+declaration scope LicenseContractValidity:
+  input contract content LicenseContractDetails
+  output is_valid content boolean
+
+scope LicenseContractValidity:
+  # Недотримання письмової форми веде до нікчемності договору (ч. 2)
+  definition is_valid =
+    contract.is_written_form
+```
+

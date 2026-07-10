@@ -158,3 +158,34 @@ scope MedicalInfoDisclosure:
     (request.disclosure_can_harm_health and request.requester_is_patient and request.requester_age >= 18)
 ```
 
+---
+
+## Стаття 286. Право на таємницю про стан здоров'я
+1. Фізична особа має право на таємницю про стан свого здоров'я, факт звернення за медичною допомогою, діагноз, а також про відомості, одержані при її медичному обстеженні.
+2. Забороняється вимагати та подавати за місцем роботи або навчання інформацію про діагноз та методи лікування фізичної особи.
+
+```catala
+# Таємниця про стан здоров'я (ст. 286)
+declaration structure SecrecyDetails:
+  data patient_consents_to_disclosure content boolean
+  data disclosure_required_by_court_or_law content boolean
+  data is_request_from_employer_or_school content boolean
+
+declaration scope MedicalSecrecyCheck:
+  input info content SecrecyDetails
+  output is_disclosure_permitted content boolean
+
+scope MedicalSecrecyCheck:
+  # Розкриття таємниці заборонено, крім згоди або вимоги суду/закону (ч. 1)
+  definition is_disclosure_permitted =
+    info.patient_consents_to_disclosure or
+    info.disclosure_required_by_court_or_law
+
+  # Безумовна заборона надавати інформацію роботодавцю чи навчальному закладу про діагноз (ч. 2)
+  exception definition is_disclosure_permitted = false
+    under condition
+      info.is_request_from_employer_or_school
+    consequence equals false
+```
+
+

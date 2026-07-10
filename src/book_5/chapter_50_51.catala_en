@@ -74,3 +74,26 @@ scope ObligationSurvivalCheck:
     (details.creditor_deceased and details.is_closely_linked_to_creditor)
 ```
 
+---
+
+## Стаття 607. Припинення зобов'язання неможливістю його виконання
+1. Зобов'язання припиняється неможливістю його виконання у зв'язку з обставиною, за яку жодна із сторін не відповідає.
+
+```catala
+# Припинення зобов'язання через неможливість виконання (ст. 607)
+declaration structure ImpossibilityDetails:
+  data performance_became_impossible content boolean
+  data party_responsible_for_impossibility content boolean
+
+declaration scope MoratoriumCheck:
+  input details content ImpossibilityDetails
+  output is_terminated content boolean
+
+scope MoratoriumCheck:
+  # Зобов'язання припиняється, якщо виконання неможливе та сторони не винні (ч. 1)
+  definition is_terminated =
+    details.performance_became_impossible and
+    not details.party_responsible_for_impossibility
+```
+
+
