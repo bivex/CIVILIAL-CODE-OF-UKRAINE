@@ -1,0 +1,54 @@
+# ПРАВИЛА ПІДСУДНОСТІ (ст. 27, 28, 30)
+
+## Стаття 27. Підсудність справ за місцезнаходженням відповідача
+1. Позови до фізичної особи пред’являються в суд за зареєстрованим у встановленому законом порядку місцем її проживання або перебування, якщо інше не передбачено законом.
+2. Позови до юридичних осіб пред’являються в суд за їхнім місцезнаходженням згідно з Єдиним державним реєстром юридичних осіб, фізичних осіб - підприємців та громадських формувань.
+
+## Стаття 28. Підсудність справ за вибором позивача
+1. Позови про стягнення аліментів, збільшення їх розміру, оплату додаткових витрат на дитину, стягнення неустойки (пені) за прострочення сплати аліментів, індексацію аліментів, зміну способу їх стягнення, про визнання батьківства, материнства, позови, що виникають з трудових правовідносин, можуть пред’являтися також за зареєстрованим місцем проживання чи перебування позивача.
+2. Позови про розірвання шлюбу можуть пред’являтися за зареєстрованим місцем проживання чи перебування позивача також у разі, якщо на його утриманні є малолітні або неповнолітні діти або якщо він не може за станом здоров’я чи з інших поважних причин виїхати до місця проживання відповідача.
+
+## Стаття 30. Виключна підсудність
+1. Позови, що виникають з приводу нерухомого майна, пред’являються за місцезнаходженням майна або основної його частини.
+
+```catala
+# Перевірка правил підсудності (ст. 27, 28, 30)
+declaration structure CaseJurisdictionDetails:
+  # Дані відповідача
+  data defendant_is_physical_person content boolean
+  data defendant_residence_location content string
+  data defendant_registered_location content string
+
+  # Предмет спору
+  data concerns_real_estate content boolean
+  data real_estate_location content string
+  data concerns_alimony content boolean
+  data concerns_divorce_with_underage_children content boolean
+  data plaintiff_residence_location content string
+  data chosen_by_plaintiff_alternative content boolean
+
+declaration scope JurisdictionCheck:
+  input details content CaseJurisdictionDetails
+  output determined_court_location content string
+
+scope JurisdictionCheck:
+  # 1. Загальне правило: загальна підсудність (за місцезнаходженням відповідача) (ст. 27)
+  definition determined_court_location =
+    if details.defendant_is_physical_person then
+      details.defendant_residence_location
+    else
+      details.defendant_registered_location
+
+  # 2. Альтернативна підсудність: вибір позивача (ст. 28)
+  exception definition determined_court_location = details.plaintiff_residence_location
+    under condition
+      details.chosen_by_plaintiff_alternative and
+      (details.concerns_alimony or details.concerns_divorce_with_underage_children)
+    consequence equals details.plaintiff_residence_location
+
+  # 3. Виключна підсудність: нерухомість (ст. 30) - має найвищий пріоритет
+  exception definition determined_court_location = details.real_estate_location
+    under condition
+      details.concerns_real_estate
+    consequence equals details.real_estate_location
+```

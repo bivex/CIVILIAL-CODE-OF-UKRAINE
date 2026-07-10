@@ -1,0 +1,47 @@
+# ДОКАЗИ ТА ДОКАЗУВАННЯ (ст. 77-80)
+
+## Стаття 77. Належність доказів
+1. Належними є докази, які містять інформацію щодо предмета доказування.
+
+## Стаття 78. Допустимість доказів
+1. Обставини справи, які за законом мають бути підтверджені певними засобами доказування, не можуть підтверджуватися іншими засобами доказування.
+
+## Стаття 79. Достовірність доказів
+1. Достовірними є докази, на підставі яких можна встановити дійсні обставини справи.
+
+## Стаття 80. Достатність доказів
+1. Достатніми є докази, які у своїй сукупності дають змогу дійти висновку про наявність або відсутність обставин справи, які входять до предмета доказування.
+2. Наявність обставини вважається доведеною, якщо докази, надані на підтвердження такої обставини, є більш переконливими, ніж докази, надані на її спростування.
+
+```catala
+# Валідація окремого доказу (ст. 77-79)
+declaration structure EvidenceItem:
+  data is_relevant content boolean
+  data is_admissible content boolean
+  data is_credible content boolean
+
+declaration scope EvidenceCheck:
+  input item content EvidenceItem
+  output is_valid_evidence content boolean
+
+scope EvidenceCheck:
+  # Доказ є належним процесуально, якщо він одночасно належний, допустимий та достовірний
+  definition is_valid_evidence =
+    item.is_relevant and
+    item.is_admissible and
+    item.is_credible
+
+# Перевірка доведеності факту за стандартом більшої вірогідності (ст. 80)
+declaration structure FactProof:
+  data probability_of_fact content decimal
+  data probability_of_contradiction content decimal
+
+declaration scope FactProofCheck:
+  input proof content FactProof
+  output is_proven content boolean
+
+scope FactProofCheck:
+  # Факт вважається доведеним, якщо докази на його підтвердження переконливіші (ч. 2 ст. 80)
+  definition is_proven =
+    proof.probability_of_fact > proof.probability_of_contradiction
+```

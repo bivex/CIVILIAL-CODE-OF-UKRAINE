@@ -4,3 +4,7 @@ This is the main entry point for the Civil Procedure Code of Ukraine, modeled in
 
 > Include: deadlines.catala_en
 > Include: appeals.catala_en
+> Include: jurisdiction.catala_en
+> Include: court_costs.catala_en
+> Include: evidence.catala_en
+> Include: pleadings.catala_en

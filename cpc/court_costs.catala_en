@@ -1,0 +1,43 @@
+# РОЗПОДІЛ СУДОВИХ ВИТРАТ (ст. 141)
+
+## Стаття 141. Розподіл судових витрат між сторонами
+1. Судовий збір покладається на сторони пропорційно розміру задоволених позовних вимог.
+2. Інші судові витрати, пов’язані з розглядом справи, покладаються:
+   1) у разі задоволення позову - на відповідача;
+   2) у разі відмови в позові - на позивача;
+   3) у разі часткового задоволення позову - на обидві сторони пропорційно розміру задоволених позовних вимог.
+
+```catala
+# Розподіл судового збору та інших витрат (ст. 141)
+declaration structure ClaimResolution:
+  data court_fee_paid content money
+  data other_costs_paid content money
+  data claim_amount content money
+  data satisfied_amount content money
+
+declaration scope CourtCostsAllocation:
+  input resolution content ClaimResolution
+  output court_fee_charged_to_plaintiff content money
+  output court_fee_charged_to_defendant content money
+  output other_costs_charged_to_plaintiff content money
+  output other_costs_charged_to_defendant content money
+
+scope CourtCostsAllocation:
+  # Розрахунок коефіцієнта задоволення позовних вимог
+  let satisfaction_ratio = resolution.satisfied_amount / resolution.claim_amount
+
+  # Судовий збір покладається на відповідача пропорційно задоволеній сумі (ч. 1)
+  definition court_fee_charged_to_defendant =
+    resolution.court_fee_paid * satisfaction_ratio
+
+  # Решта збору покладається на позивача
+  definition court_fee_charged_to_plaintiff =
+    resolution.court_fee_paid - court_fee_charged_to_defendant
+
+  # Інші судові витрати розподіляються аналогічно (ч. 2)
+  definition other_costs_charged_to_defendant =
+    resolution.other_costs_paid * satisfaction_ratio
+
+  definition other_costs_charged_to_plaintiff =
+    resolution.other_costs_paid - other_costs_charged_to_defendant
+```

@@ -1,0 +1,35 @@
+# СТРОКИ ПОДАННЯ ЗАЯВ ПО СУТІ СПРАВИ (ст. 178, 179, 180, 191)
+
+## Стаття 178. Відзив на позовну заяву
+7. Суд визначає строк для подання відзиву на позовну заяву, який не може бути меншим п’ятнадцяти днів з дня вручення ухвали про відкриття провадження у справі.
+
+## Стаття 191. Строки вчинення процесуальних дій при підготовчому провадженні
+1. Відзив на позовну заяву подається у строк, встановлений судом, який не може бути меншим п’ятнадцяти днів з дня вручення ухвали про відкриття провадження.
+
+```catala
+# Перевірка строку подання відзиву на позов (ст. 178, 191)
+declaration structure PleadingFiling:
+  data date_of_receipt_of_summons content date
+  data court_ordered_defense_deadline content date
+  data actual_submission_date content date
+
+declaration scope DefenseFilingCheck:
+  input filing content PleadingFiling
+  output is_defense_timely content boolean
+  output court_deadline_is_valid content boolean
+
+scope DefenseFilingCheck:
+  # Строк для відзиву не може бути меншим ніж 15 днів з дати вручення ухвали (ч. 7 ст. 178)
+  definition court_deadline_is_valid =
+    filing.court_ordered_defense_deadline >= filing.date_of_receipt_of_summons + 15 day
+
+  # Відзив вважається поданим вчасно, якщо дотримано законного або судового строку
+  definition is_defense_timely =
+    let effective_deadline =
+      if court_deadline_is_valid then
+        filing.court_ordered_defense_deadline
+      else
+        filing.date_of_receipt_of_summons + 15 day
+    in
+    filing.actual_submission_date <= effective_deadline
+```
