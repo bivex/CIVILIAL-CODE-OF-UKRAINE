@@ -103,3 +103,33 @@ scope TreasureDistribution:
       # Звичайний скарб: 50% шукачу
       treasure.found_value * 50%
 ```
+
+---
+
+## Стаття 344. Набувальна давність
+1. Особа, яка добросовісно заволоділа чужим майном і продовжує відкрито, безперервно володіти нерухомим майном протягом десяти років або рухомим майном - протягом п'яти років, набуває право власності на це майно (набувальна давність), якщо інше не встановлено цим Кодексом.
+
+```catala
+# Набувальна давність (ст. 344)
+declaration structure PossessionDetails:
+  data is_real_estate content boolean
+  data years_possessed content integer
+  data is_good_faith content boolean
+  data is_open_possession content boolean
+  data is_continuous_possession content boolean
+
+declaration scope AcquisitivePrescriptionCheck:
+  input possession content PossessionDetails
+  output ownership_acquired content boolean
+
+scope AcquisitivePrescriptionCheck:
+  definition ownership_acquired =
+    possession.is_good_faith and
+    possession.is_open_possession and
+    possession.is_continuous_possession and
+    (if possession.is_real_estate then
+       possession.years_possessed >= 10
+     else
+       possession.years_possessed >= 5)
+```
+

@@ -97,3 +97,39 @@ scope UseOfNameLegality:
       request.has_spouse_or_children_consent or
       (not request.has_relatives_exist and request.has_parents_or_siblings_consent)
 ```
+
+---
+
+## Стаття 313. Право на свободу пересування
+1. Фізична особа має право на свободу пересування.
+2. Фізична особа, яка досягла чотирнадцяти років, має право на вільне самостійне пересування територією України і вибір місця проживання, за винятком обмежень, які встановлюються законом.
+3. Фізична особа, яка досягла шістнадцяти років, має право на вільний самостійний виїзд за межі України.
+4. Фізична особа, яка не досягла шістнадцяти років, має право на виїзд за межі України лише за згодою батьків (усиновлювачів), піклувальників та в їхньому супроводі або в супроводі осіб, які ними уповноважені, крім випадків, передбачених законом.
+
+```catala
+# Перевірка права на свободу пересування та виїзд за кордон (ст. 313)
+declaration structure TravelRequest:
+  data age content integer
+  data travel_abroad content boolean
+  data accompanied_by_parents_or_authorized content boolean
+  data parental_consent_provided content boolean
+
+declaration scope TravelLegalityCheck:
+  input request content TravelRequest
+  output is_allowed content boolean
+
+scope TravelLegalityCheck:
+  definition is_allowed =
+    if request.travel_abroad then
+      if request.age >= 16 then
+        # Самостійний виїзд з 16 років (ч. 3)
+        true
+      else
+        # До 16 років потрібна згода та супровід батьків/уповноважених (ч. 4)
+        request.parental_consent_provided and
+        request.accompanied_by_parents_or_authorized
+    else
+      # Пересування всередині країни вільне з 14 років (ч. 2)
+      request.age >= 14
+```
+

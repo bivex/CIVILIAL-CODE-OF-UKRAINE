@@ -48,3 +48,29 @@ scope DelayChargesCalculation:
   definition total_due =
     info.delayed_amount + inflation_compensation + interest_compensation
 ```
+
+---
+
+## Стаття 608. Припинення зобов'язання смертю фізичної особи
+1. Зобов'язання припиняється смертю боржника, якщо воно нерозривно пов'язане з його особою і не може бути виконане іншою особою.
+2. Зобов'язання припиняється смертю кредитора, якщо воно нерозривно пов'язане з особою кредитора.
+
+```catala
+# Припинення зобов'язання внаслідок смерті однієї зі сторін (ст. 608)
+declaration structure ObligationSurvivalDetails:
+  data debtor_deceased content boolean
+  data creditor_deceased content boolean
+  data is_closely_linked_to_debtor content boolean
+  data is_closely_linked_to_creditor content boolean
+
+declaration scope ObligationSurvivalCheck:
+  input details content ObligationSurvivalDetails
+  output is_terminated content boolean
+
+scope ObligationSurvivalCheck:
+  # Зобов'язання припиняється при смерті сторони, якщо воно пов'язане особисто (ч. 1, 2)
+  definition is_terminated =
+    (details.debtor_deceased and details.is_closely_linked_to_debtor) or
+    (details.creditor_deceased and details.is_closely_linked_to_creditor)
+```
+

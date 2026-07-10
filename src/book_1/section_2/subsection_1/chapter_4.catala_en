@@ -170,3 +170,36 @@ scope TransactionValidityCheck:
          # Повністю недієздатна особа самостійно не вчиняє правочини (тільки опікун)
          transaction.has_guardian_consent
 ```
+
+---
+
+### Стаття 46. Оголошення фізичної особи померлою
+1. Фізична особа може бути оголошена судом померлою, якщо у місці її постійного проживання немає відомостей про місце її перебування протягом трьох років, а якщо вона пропала безвісти за обставин, що загрожували їй смертю або дають підставу припускати її загибель від певного нещасного випадку, - протягом шести місяців.
+2. Фізична особа, яка пропала безвісти у зв'язку з воєнними діями, може бути оголошена судом померлою після спливу двох років від дня закінчення воєнних дій. З урахуванням конкретних обставин справи суд може оголосити фізичну особу померлою і до спливу цього строку, але не раніше спливу шести місяців.
+
+```catala
+# Перевірка підстав для оголошення особи померлою (ст. 46)
+declaration structure MissingPersonDetails:
+  data months_without_news content integer
+  data disappeared_in_danger content boolean
+  data disappeared_in_military_actions content boolean
+  data military_actions_ended_months_ago content integer
+
+declaration scope DeclareDeadCheck:
+  input person content MissingPersonDetails
+  output can_be_declared_dead content boolean
+
+scope DeclareDeadCheck:
+  definition can_be_declared_dead =
+    if person.disappeared_in_military_actions then
+      # Після воєнних дій - 2 роки (24 місяці) або щонайменше 6 місяців за рішенням суду (ч. 2)
+      person.military_actions_ended_months_ago >= 24 or
+      (person.military_actions_ended_months_ago >= 6 and person.months_without_news >= 6)
+    else if person.disappeared_in_danger then
+      # Небезпечні обставини - 6 місяців (ч. 1)
+      person.months_without_news >= 6
+    else
+      # Загальний строк - 3 роки (36 місяців) (ч. 1)
+      person.months_without_news >= 36
+```
+

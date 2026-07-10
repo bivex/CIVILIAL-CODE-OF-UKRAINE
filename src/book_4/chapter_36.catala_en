@@ -37,3 +37,39 @@ scope CopyrightValidityCheck:
       info.current_date <= info.author_death_date + 70 year
     consequence equals true
 ```
+
+---
+
+### Стаття 433. Об'єкти авторського права
+1. Об'єктами авторського права є твори у сфері літератури, мистецтва, науки, зокрема: літературні твори, комп'ютерні програми, музичні твори, аудіовізуальні твори тощо.
+
+### Стаття 434. Твори, що не є об'єктами авторського права
+1. Не є об'єктами авторського права:
+   1) акти органів державної влади та органів місцевого самоврядування (закони, укази, постанови, рішення тощо), а також їх офіційні переклади;
+   2) державні символи України, державні нагороди; державні знаки, емблеми;
+   3) грошові знаки (банкноти, монети);
+   4) повідомлення про новини дня або поточні події, що мають характер звичайної прес-інформації.
+
+```catala
+# Перевірка об'єкта на придатність до авторського права (ст. 433, 434)
+declaration structure WorkDetails:
+  data is_artistic_scientific_literary content boolean
+  data is_official_state_document content boolean
+  data is_state_symbol_or_award content boolean
+  data is_currency content boolean
+  data is_news_of_the_day content boolean
+
+declaration scope CopyrightEligibilityCheck:
+  input work content WorkDetails
+  output is_eligible content boolean
+
+scope CopyrightEligibilityCheck:
+  # Твір охороняється, якщо він є творчим результатом і не підпадає під винятки ст. 434
+  definition is_eligible =
+    work.is_artistic_scientific_literary and
+    not (work.is_official_state_document or
+         work.is_state_symbol_or_award or
+         work.is_currency or
+         work.is_news_of_the_day)
+```
+
