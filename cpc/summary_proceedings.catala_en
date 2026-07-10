@@ -58,3 +58,59 @@ scope SummaryProceedingsEligibilityCheck:
       # Будь-яка інша справа за загальним правилом (ч. 2)
       true
 ```
+
+---
+
+## Стаття 19. Справи, що відносяться до юрисдикції загальних судів
+6. Для цілей цього Кодексу малозначними справами є:
+   1) ціна позову не перевищує 30 розмірів прожиткового мінімуму;
+   2) справи незначної складності, визнані судом малозначними (ціна позову не більше 80 розмірів прожиткового мінімуму);
+   3) справи про стягнення аліментів (без оспорювання батьківства);
+   4) справи про розірвання шлюбу;
+   5) захист прав споживачів (ціна позову не більше 60 розмірів прожиткового мінімуму).
+
+```catala
+# Визначення малозначної справи (ч. 6 ст. 19)
+declaration structure CaseDetailsForMinors:
+  data price_of_claim content money
+  data living_wage_amount content money
+  data is_low_complexity content boolean
+  data is_mandatory_general_proceedings content boolean
+  data concerns_alimony_without_paternity_dispute content boolean
+  data concerns_divorce content boolean
+  data concerns_consumer_protection content boolean
+
+declaration scope MinorCaseCheck:
+  input case_info content CaseDetailsForMinors
+  output is_minor content boolean
+
+scope MinorCaseCheck:
+  let wage = case_info.living_wage_amount
+
+  # 1. Справи з ціною позову до 30 прожиткових мінімумів (п. 1)
+  definition is_minor =
+    case_info.price_of_claim <= wage * 30
+
+  # 2. Аліменти та розірвання шлюбу є малозначними (п. 3, 4)
+  exception definition is_minor = true
+    under condition
+      case_info.concerns_alimony_without_paternity_dispute or
+      case_info.concerns_divorce
+    consequence equals true
+
+  # 3. Захист прав споживачів з ціною до 60 прожиткових мінімумів (п. 5)
+  exception definition is_minor = true
+    under condition
+      case_info.concerns_consumer_protection and
+      case_info.price_of_claim <= wage * 60
+    consequence equals true
+
+  # 4. Справи незначної складності за оцінкою суду (п. 2), але не більше 80 прожиткових мінімумів
+  exception definition is_minor = true
+    under condition
+      case_info.is_low_complexity and
+      not case_info.is_mandatory_general_proceedings and
+      case_info.price_of_claim <= wage * 80
+    consequence equals true
+```
+
