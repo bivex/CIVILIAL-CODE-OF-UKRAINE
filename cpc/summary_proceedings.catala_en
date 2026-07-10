@@ -1,0 +1,60 @@
+# СПРОЩЕНЕ ПОЗОВНЕ ПРОВАДЖЕННЯ (ст. 274)
+
+## Стаття 274. Справи, що розглядаються в порядку спрощеного позовного провадження
+1. У порядку спрощеного позовного провадження розглядаються справи:
+   1) малозначні справи;
+   2) що виникають з трудових відносин;
+   3) про надання дозволу на тимчасовий виїзд дитини за кордон (за певних умов).
+2. В порядку спрощеного позовного провадження не можуть бути розглянуті справи у спорах:
+   1) що виникають з сімейних відносин, крім спорів про стягнення аліментів, розірвання шлюбу та поділ майна подружжя;
+   2) щодо спадкування;
+   3) щодо приватизації державного житлового фонду;
+   4) щодо визнання необґрунтованими активів;
+   5) в яких ціна позову перевищує двісті п’ятдесят розмірів прожиткового мінімуму для працездатних осіб.
+
+```catala
+# Перевірка можливості розгляду справи за правилами спрощеного провадження (ст. 274)
+declaration structure CasePleadingDetails:
+  data price_of_claim content money
+  data living_wage_amount content money
+
+  # Категорії спорів
+  data arises_from_labor_relations content boolean
+  data concerns_child_travel_abroad content boolean
+  data is_minor_case content boolean                         # малозначна справа
+
+  # Винятки для спрощеного провадження (ч. 4)
+  data arises_from_family_relations content boolean
+  data concerns_alimony_or_divorce_or_division content boolean # дозволені сімейні спори (аліменти, поділ)
+  data concerns_inheritance content boolean
+  data concerns_privatization_of_housing content boolean
+  data concerns_unfounded_assets content boolean
+  data combined_with_prohibited_claims content boolean
+
+declaration scope SummaryProceedingsEligibilityCheck:
+  input info content CasePleadingDetails
+  output is_eligible content boolean
+
+scope SummaryProceedingsEligibilityCheck:
+  # Граничний ліміт ціни позову: 250 розмірів прожиткового мінімуму (п. 5 ч. 4)
+  let max_allowed_claim_price = info.living_wage_amount * 250
+
+  # Визначення заборон згідно з частиною 4 статті 274
+  let is_prohibited_by_law =
+    info.concerns_inheritance or
+    info.concerns_privatization_of_housing or
+    info.concerns_unfounded_assets or
+    info.combined_with_prohibited_claims or
+    info.price_of_claim > max_allowed_claim_price or
+    (info.arises_from_family_relations and not info.concerns_alimony_or_divorce_or_division)
+
+  # Справа підлягає розгляду у спрощеному провадженні, якщо немає прямої заборони
+  definition is_eligible =
+    if is_prohibited_by_law then
+      false
+    else if info.is_minor_case or info.arises_from_labor_relations or info.concerns_child_travel_abroad then
+      true
+    else
+      # Будь-яка інша справа за загальним правилом (ч. 2)
+      true
+```

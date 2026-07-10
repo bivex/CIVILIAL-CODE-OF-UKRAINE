@@ -1,0 +1,41 @@
+# ЗАБЕЗПЕЧЕННЯ ПОЗОВУ (ст. 150)
+
+## Стаття 150. Види забезпечення позову
+3. Заходи забезпечення позову мають бути співмірними із заявленими позивачем вимогами.
+4. Не допускається забезпечення позову шляхом накладення арешту на заробітну плату, пенсію та стипендію, соціальну допомогу, кошти на кореспондентських рахунках банку, майно державних резервів тощо.
+   *Ця вимога не поширюється на позови про стягнення аліментів, про відшкодування шкоди, заподіяної каліцтвом чи смертю, про відшкодування збитків, заподіяних кримінальним правопорушенням.*
+
+```catala
+# Перевірка можливості застосування заходів забезпечення позову (ст. 150)
+declaration structure InjunctionRequest:
+  data is_proportionate content boolean
+  data targets_wages_pensions_or_social_benefits content boolean
+  data targets_bank_correspondent_accounts content boolean
+  data targets_state_reserves content boolean
+
+  # Категорія позову (винятки для захисту зарплат)
+  data is_alimony_claim content boolean
+  data is_health_or_death_damage_claim content boolean
+  data is_criminal_damage_claim content boolean
+
+declaration scope InjunctionPermittedCheck:
+  input request content InjunctionRequest
+  output can_be_granted content boolean
+
+scope InjunctionPermittedCheck:
+  # 1. Загальна вимога: заходи мають бути співмірними і не блокувати резерви/рахунки банків (ч. 3, 4)
+  definition can_be_granted =
+    request.is_proportionate and
+    not request.targets_bank_correspondent_accounts and
+    not request.targets_state_reserves
+
+  # 2. Виключення: не допускається арешт зарплат/пенсій/допомог (ч. 4)
+  # Але арешт зарплат дозволено для аліментів, шкоди здоров'ю або кримінальних збитків
+  exception definition can_be_granted = false
+    under condition
+      request.targets_wages_pensions_or_social_benefits and
+      not (request.is_alimony_claim or
+           request.is_health_or_death_damage_claim or
+           request.is_criminal_damage_claim)
+    consequence equals false
+```

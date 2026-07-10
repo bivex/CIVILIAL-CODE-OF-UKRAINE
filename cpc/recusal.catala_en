@@ -1,0 +1,68 @@
+# ВІДВІД СУДДІ (ст. 36-37)
+
+## Стаття 36. Підстави для відводу (самовідводу) судді
+1. Суддя не може розглядати справу і підлягає відводу, якщо він:
+   1) є членом сім’ї або близьким родичем учасника судового процесу;
+   2) брав участь у справі як свідок, експерт, представник тощо;
+   3) прямо чи побічно заінтересований у результаті розгляду;
+   4) порушено автоматичний розподіл справ;
+   5) є інші обставини, що викликають сумнів в неупередженості.
+4. Незгода сторони з процесуальними рішеннями судді не може бути підставою для відводу.
+
+## Стаття 37. Недопустимість повторної участі судді в розгляді справи
+1. Суддя, який брав участь у вирішенні справи в суді першої інстанції, не може брати участі в розгляді цієї самої справи в судах апеляційної і касаційної інстанцій.
+2. Суддя, який брав участь у врегулюванні спору за участю судді (медіація), не може брати участі в розгляді цієї справи по суті.
+
+```catala
+# Перевірка підстав для відводу та самовідводу судді (ст. 36, 37)
+declaration structure RecusalDetails:
+  # Зв'язки судді (ст. 36)
+  data is_family_or_close_relative_of_participant content boolean
+  data participated_as_witness_expert_or_representative content boolean
+  data has_direct_or_indirect_interest content boolean
+  data violates_impartiality_doubt content boolean
+  data violated_auto_assignment_procedure content boolean
+
+  # Повторна участь (ст. 37)
+  data participated_in_first_instance content boolean
+  data participated_in_appeal content boolean
+  data participated_in_cassation content boolean
+  data participated_in_mediation content boolean
+
+  # Поточний етап розгляду
+  data is_new_first_instance_hearing content boolean
+  data is_appeal_hearing content boolean
+  data is_cassation_hearing content boolean
+  data is_reopening_new_evidence content boolean
+
+  # Обставини, що не є підставою для відводу (ч. 4 ст. 36)
+  data disagreement_with_procedural_decisions content boolean
+
+declaration scope RecusalCheck:
+  input details content RecusalDetails
+  output must_recuse content boolean
+
+scope RecusalCheck:
+  # Визначення заборони на повторну участь за статтею 37
+  let repeated_participation_prohibited =
+    (details.participated_in_first_instance and (details.is_appeal_hearing or details.is_cassation_hearing or details.is_new_first_instance_hearing)) or
+    (details.participated_in_appeal and (details.is_cassation_hearing or details.is_new_first_instance_hearing)) or
+    (details.participated_in_cassation and (details.is_appeal_hearing or details.is_new_first_instance_hearing)) or
+    (details.participated_in_mediation) or
+    (details.participated_in_first_instance and details.is_reopening_new_evidence)
+
+  # Суддя підлягає відводу у разі конфлікту інтересів або повторної участі (ст. 36, 37)
+  definition must_recuse =
+    details.is_family_or_close_relative_of_participant or
+    details.participated_as_witness_expert_or_representative or
+    details.has_direct_or_indirect_interest or
+    details.violated_auto_assignment_procedure or
+    details.violates_impartiality_doubt or
+    repeated_participation_prohibited
+
+  # Незгода з процесуальними рішеннями не є підставою для відводу (ч. 4 ст. 36)
+  exception definition must_recuse = false
+    under condition
+      details.disagreement_with_procedural_decisions
+    consequence equals false
+```

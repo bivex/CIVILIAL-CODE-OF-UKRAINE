@@ -8,3 +8,6 @@ This is the main entry point for the Civil Procedure Code of Ukraine, modeled in
 > Include: court_costs.catala_en
 > Include: evidence.catala_en
 > Include: pleadings.catala_en
+> Include: summary_proceedings.catala_en
+> Include: injunctions.catala_en
+> Include: recusal.catala_en
