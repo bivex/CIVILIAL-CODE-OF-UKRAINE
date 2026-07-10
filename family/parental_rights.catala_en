@@ -1,0 +1,35 @@
+# ПОЗБАВЛЕННЯ БАТЬКІВСЬКИХ ПРАВ (ст. 164)
+
+## Стаття 164. Підстави позбавлення батьківських прав
+1. Мати, батько можуть бути позбавлені судом батьківських прав, якщо вона, він:
+   1) не забрали дитину з пологового будинку без поважних причин;
+   2) ухиляються від виконання своїх обов’язків по вихованню дитини;
+   3) жорстоко поводяться з дитиною;
+   4) є хронічними алкоголіками або наркоманами;
+   5) вдаються до експлуатації дитини;
+   6) засуджені за вчинення умисного кримінального правопорушення щодо дитини.
+
+```catala
+# Перевірка підстав для позбавлення батьківських прав (ст. 164)
+declaration structure ParentalDeprivationDetails:
+  data left_child_in_maternity_without_excuse content boolean
+  data evades_parental_duties content boolean
+  data cruel_treatment_of_child content boolean
+  data chronic_alcoholism_or_drug_addiction content boolean
+  data exploits_child content boolean
+  data convicted_of_intentional_crime_against_child content boolean
+
+declaration scope ParentalRightsDeprivationCheck:
+  input details content ParentalDeprivationDetails
+  output can_be_deprived content boolean
+
+scope ParentalRightsDeprivationCheck:
+  # Наявність хоча б однієї з підстав є достатньою для ухвалення рішення судом (ч. 1)
+  definition can_be_deprived =
+    details.left_child_in_maternity_without_excuse or
+    details.evades_parental_duties or
+    details.cruel_treatment_of_child or
+    details.chronic_alcoholism_or_drug_addiction or
+    details.exploits_child or
+    details.convicted_of_intentional_crime_against_child
+```
