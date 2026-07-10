@@ -67,3 +67,43 @@ scope CaseSuspensionCheck:
   definition suspension_status_applies =
     must_suspend or may_suspend
 ```
+
+---
+
+## Стаття 255. Підстави закриття провадження у справі
+1. Суд своєю ухвалою закриває провадження у справі, якщо:
+   1) справа не підлягає розгляду в порядку цивільного судочинства;
+   2) відсутній предмет спору;
+   3) набрали законної сили рішення суду або ухвала про закриття між тими самими сторонами, про той самий предмет і з тих самих підстав;
+   4) позивач відмовився від позову і відмова прийнята судом;
+   5) сторони уклали мирову угоду і вона затверджена судом;
+   7) настала смерть фізособи або припинено юрособу, якщо відносини не допускають правонаступництва;
+   8) укладено третейську угоду і є заперечення відповідача.
+
+```catala
+# Перевірка підстав для закриття провадження у справі (ст. 255)
+declaration structure CloseProceedingsDetails:
+  data not_subject_to_civil_court content boolean
+  data no_subject_matter_of_dispute content boolean
+  data has_binding_decision_same_parties_and_subject content boolean
+  data plaintiff_withdrew_lawsuit_accepted content boolean
+  data settlement_agreement_approved content boolean
+  data party_died_or_liquidated content boolean
+  data allows_succession content boolean
+  data arbitration_agreement_exists_with_objections content boolean
+
+declaration scope CloseProceedingsCheck:
+  input details content CloseProceedingsDetails
+  output should_close content boolean
+
+scope CloseProceedingsCheck:
+  definition should_close =
+    details.not_subject_to_civil_court or
+    details.no_subject_matter_of_dispute or
+    details.has_binding_decision_same_parties_and_subject or
+    details.plaintiff_withdrew_lawsuit_accepted or
+    details.settlement_agreement_approved or
+    (details.party_died_or_liquidated and not details.allows_succession) or
+    details.arbitration_agreement_exists_with_objections
+```
+

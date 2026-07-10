@@ -102,3 +102,48 @@ scope CourtFineCheck:
     (details.was_violation_corrected or details.respectful_reasons_provided)
 ```
 
+---
+
+## Стаття 135. Забезпечення та попередня оплата судових витрат
+4. Суд має право, за клопотанням відповідача, зобов'язати позивача внести на депозитний рахунок грошову суму для забезпечення витрат відповідача на правничу допомогу, якщо позов безпідставний або позивач не має майна/місця проживання в Україні.
+6. У разі невнесення коштів у строк суд має право залишити позов без розгляду.
+7. У випадку задоволення позову внесена сума повертається позивачу.
+
+```catala
+# Перевірка умов забезпечення судових витрат відповідача (ст. 135)
+declaration structure CostsSecurityDetails:
+  data is_claim_obviously_unfounded_or_abuse content boolean
+  data plaintiff_has_no_registered_residence_in_ukraine content boolean
+  data plaintiff_has_insufficient_property_in_ukraine content boolean
+  data plaintiff_actions_make_execution_impossible content boolean
+  data defendant_requested_security content boolean
+  data security_amount_deposited content money
+  data required_security_amount content money
+  data was_deposited_in_time content boolean
+  data claim_satisfied content boolean
+
+declaration scope CostsSecurityCheck:
+  input info content CostsSecurityDetails
+  output is_eligible_for_security content boolean
+  output can_leave_without_consideration content boolean
+  output return_deposit_to_plaintiff content boolean
+
+scope CostsSecurityCheck:
+  # Забезпечення витрат за клопотанням відповідача за певних умов (ч. 4)
+  definition is_eligible_for_security =
+    info.defendant_requested_security and
+    (info.is_claim_obviously_unfounded_or_abuse or
+     (info.plaintiff_has_no_registered_residence_in_ukraine and info.plaintiff_has_insufficient_property_in_ukraine) or
+     info.plaintiff_actions_make_execution_impossible)
+
+  # Якщо кошти не внесені в строк, позов залишається без розгляду (ч. 6)
+  definition can_leave_without_consideration =
+    is_eligible_for_security and
+    not info.was_deposited_in_time
+
+  # Повернення депозиту позивачу в разі виграшу справи (ч. 7)
+  definition return_deposit_to_plaintiff =
+    info.claim_satisfied
+```
+
+
