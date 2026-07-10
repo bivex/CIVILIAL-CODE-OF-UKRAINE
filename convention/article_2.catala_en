@@ -1,0 +1,42 @@
+# СТАТТЯ 2. Право на життя
+
+1. Право кожного на життя охороняється законом. Нікого не може бути умисно позбавлено життя інакше ніж на виконання смертного вироку суду, винесеного після визнання його винним у вчиненні злочину, за який закон передбачає таке покарання.
+2. Позбавлення життя не розглядається як таке, що вчинене на порушення цієї статті, якщо воно є наслідком виключно необхідного застосування сили:
+   a) для захисту будь-якої особи від незаконного насильства;
+   b) для здійснення законного арешту або для запобігання втечі особи, яку законно тримають під вартою;
+   c) при вчиненні правомірних дій для придушення заворушення або повстання.
+
+```catala
+# Перевірка правомірності позбавлення життя за ст. 2 Конвенції
+declaration structure DeprivationOfLifeDetails:
+  data is_intentional content boolean
+  data death_penalty_sentence content boolean
+  data force_was_absolutely_necessary content boolean
+  data purpose_defense_from_violence content boolean
+  data purpose_lawful_arrest_or_prevent_escape content boolean
+  data purpose_suppress_riot_or_insurrection content boolean
+
+declaration scope RightToLifeCheck:
+  input details content DeprivationOfLifeDetails
+  output is_lawful content boolean
+
+scope RightToLifeCheck:
+  # Загальне правило: позбавлення життя незаконне
+  definition is_lawful = false
+
+  # Виняток 1: виконання смертного вироку суду (ч. 1)
+  exception definition is_lawful = true
+    under condition
+      details.is_intentional and
+      details.death_penalty_sentence
+    consequence equals true
+
+  # Виняток 2: застосування сили для самозахисту, арешту чи придушення заколоту (ч. 2)
+  exception definition is_lawful = true
+    under condition
+      details.force_was_absolutely_necessary and
+      (details.purpose_defense_from_violence or
+       details.purpose_lawful_arrest_or_prevent_escape or
+       details.purpose_suppress_riot_or_insurrection)
+    consequence equals true
+```

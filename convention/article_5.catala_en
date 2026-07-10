@@ -1,0 +1,44 @@
+# СТАТТЯ 5. Право на свободу та особисту недоторканність
+
+1. Кожен має право на свободу та особисту недоторканність. Нікого не може бути позбавлено свободи, крім таких випадків і відповідно до процедури, встановленої законом:
+   a) законне ув'язнення особи після засудження її компетентним судом;
+   b) законний арешт або затримання особи за невиконання припису суду або для забезпечення обов'язку;
+   c) законний арешт або затримання особи з метою допровадження її до компетентного судового органу за наявності підозри у вчиненні правопорушення;
+   d) затримання неповнолітного з метою виховного нагляду;
+   e) законне затримання осіб для запобігання поширенню інфекційних захворювань, психічнохворих, алкоголіків, наркоманів чи бродяг;
+   f) законний арешт або затримання особи з метою запобігання її недозволеному в'їзду або щодо депортації/екстрадиції.
+
+```catala
+# Перевірка законності обмеження свободи за ст. 5 Конвенції
+declaration structure DeprivationOfLibertyDetails:
+  data is_deprived_of_liberty content boolean
+  data complies_with_legal_procedure content boolean
+  data detention_after_conviction content boolean
+  data arrest_for_non_compliance_with_court_order content boolean
+  data arrest_on_suspension_of_offence content boolean
+  data detention_of_minor_for_education content boolean
+  data detention_prevent_infection_or_mental_health content boolean
+  data arrest_prevent_illegal_entry_or_extradition content boolean
+
+declaration scope LibertyDeprivationCheck:
+  input details content DeprivationOfLibertyDetails
+  output is_lawful content boolean
+
+scope LibertyDeprivationCheck:
+  # Будь-яке позбавлення свободи є незаконним за замовчуванням, якщо особа позбавлена свободи
+  definition is_lawful =
+    not details.is_deprived_of_liberty
+
+  # Виняток: законне позбавлення за однією з підстав ч. 1
+  exception definition is_lawful = true
+    under condition
+      details.is_deprived_of_liberty and
+      details.complies_with_legal_procedure and
+      (details.detention_after_conviction or
+       details.arrest_for_non_compliance_with_court_order or
+       details.arrest_on_suspension_of_offence or
+       details.detention_of_minor_for_education or
+       details.detention_prevent_infection_or_mental_health or
+       details.arrest_prevent_illegal_entry_or_extradition)
+    consequence equals true
+```

@@ -1,0 +1,39 @@
+# СТАТТЯ 4. Заборона рабства і примусової праці
+
+1. Нікого не можна тримати в рабстві або в підневільному стані.
+2. Ніхто не може бути присилуваний виконувати примусову чи обов'язкову працю.
+3. Для цілей цієї статті значення терміна "примусова чи обов'язкова праця" не поширюється:
+   a) на будь-яку роботу, виконання якої зазвичай вимагається під час тримання в умовах позбавлення свободи;
+   b) на будь-яку службу військового характеру або службу, яка вимагається замість обов'язкової військової служби;
+   c) на службу, що вимагається у випадку надзвичайної ситуації або стихійного лиха;
+   d) на будь-яку роботу чи службу, яка є частиною звичайних громадянських обов'язків.
+
+```catala
+# Перевірка наявності забороненої примусової праці за ст. 4 Конвенції
+declaration structure LaborDetails:
+  data is_slavery_or_servitude content boolean
+  data is_forced_or_compulsory content boolean
+  data is_work_in_detention content boolean
+  data is_military_or_alternative_service content boolean
+  data is_emergency_service content boolean
+  data is_normal_civic_obligation content boolean
+
+declaration scope ForcedLaborCheck:
+  input labor content LaborDetails
+  output violates_convention content boolean
+
+scope ForcedLaborCheck:
+  # Рабство завжди порушує конвенцію (ч. 1)
+  definition violates_convention =
+    labor.is_slavery_or_servitude
+
+  # Примусова праця порушує конвенцію, якщо це не виняток ч. 3
+  exception definition violates_convention = true
+    under condition
+      labor.is_forced_or_compulsory and
+      not (labor.is_work_in_detention or
+           labor.is_military_or_alternative_service or
+           labor.is_emergency_service or
+           labor.is_normal_civic_obligation)
+    consequence equals true
+```

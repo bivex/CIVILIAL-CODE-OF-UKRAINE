@@ -1,0 +1,41 @@
+# ПРОТОКОЛ 1. СТАТТЯ 1. Захист власності
+
+Кожна фізична або юридична особа має право мирно володіти своїм майном. Ніхто не може бути позбавлений своєї власності інакше як в інтересах суспільства і на умовах, передбачених законом і загальними принципами міжнародного права.
+Проте попередні положення жодним чином не обмежують право держави вводити в дію такі закони, які вона вважає за необхідне, щоб здійснювати контроль за користуванням майном відповідно до загальних інтересів або для забезпечення сплати податків чи інших зборів або штрафів.
+
+```catala
+# Перевірка законності втручання у право власності за Протоколом 1
+declaration structure PropertyControlDetails:
+  data is_deprived_of_property content boolean
+  data public_interest content boolean
+  data law_and_international_principles_followed content boolean
+  data is_control_of_use content boolean
+  data state_control_for_general_interest content boolean
+  data secure_taxes_or_penalties content boolean
+
+declaration scope PropertyProtectionCheck:
+  input control content PropertyControlDetails
+  output deprivation_is_lawful content boolean
+  output control_use_is_lawful content boolean
+  output complies_with_protocol content boolean
+
+scope PropertyProtectionCheck:
+  # Позбавлення майна дозволено тільки в суспільних інтересах та згідно із законом (абз. 1)
+  definition deprivation_is_lawful =
+    control.public_interest and
+    control.law_and_international_principles_followed
+
+  # Держава має право контролювати використання відповідно до загальних інтересів або податків (абз. 2)
+  definition control_use_is_lawful =
+    control.state_control_for_general_interest or
+    control.secure_taxes_or_penalties
+
+  # Перевірка загальної відповідності втручання Протоколу 1
+  definition complies_with_protocol =
+    if control.is_deprived_of_property then
+      deprivation_is_lawful
+    else if control.is_control_of_use then
+      control_use_is_lawful
+    else
+      true # мирне володіння без втручання
+```

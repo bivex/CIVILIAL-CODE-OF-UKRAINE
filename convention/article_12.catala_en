@@ -1,0 +1,25 @@
+# СТАТТЯ 12. Право на шлюб
+
+Чоловік і жінка, що досягли шлюбного віку, мають право на шлюб і створення сім'ї згідно з національними законами, які регулюють здійснення цього права.
+
+```catala
+# Перевірка права на шлюб за ст. 12 Конвенції
+declaration structure MarriageDetails:
+  data is_man content boolean
+  data is_woman content boolean
+  data reached_marriageable_age content boolean
+  data complies_with_national_laws content boolean
+
+declaration scope MarriageRightCheck:
+  input party_1 content MarriageDetails
+  input party_2 content MarriageDetails
+  output is_permitted content boolean
+
+scope MarriageRightCheck:
+  definition is_permitted =
+    ((party_1.is_man and party_2.is_woman) or (party_1.is_woman and party_2.is_man)) and
+    party_1.reached_marriageable_age and
+    party_2.reached_marriageable_age and
+    party_1.complies_with_national_laws and
+    party_2.complies_with_national_laws
+```
