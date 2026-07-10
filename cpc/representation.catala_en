@@ -1,0 +1,56 @@
+# ПРЕДСТАВНИЦТВО У СУДІ (ст. 58-61)
+
+## Стаття 58. Участь у справі представника
+1. Сторона може брати участь у судовому процесі особисто та (або) через представника.
+
+## Стаття 59. Законні представники
+1. Права та інтереси малолітніх осіб та недієздатних осіб захищають у суді їхні батьки, усиновлювачі, опікуни.
+
+## Стаття 60. Особи, які можуть бути представниками
+1. Представником у суді може бути адвокат або законний представник.
+2. Під час розгляду спорів, що виникають з трудових відносин, а також справ у малозначних спорах представником може бути особа, яка досягла вісімнадцяти років, має цивільну процесуальну дієздатність.
+
+## Стаття 61. Особи, які не можуть бути представниками
+1. Не може бути представником особа, яка є секретарем судового засідання, експертом, спеціалістом, перекладачем, свідком або помічником судді.
+
+```catala
+# Перевірка повноважень представника (ст. 58-61)
+declaration structure RepresentativeDetails:
+  data is_attorney content boolean                         # адвокат (ст. 60)
+  data is_legal_representative content boolean             # законний представник (ст. 59)
+  data representative_age content integer
+  data is_capable_adult content boolean
+  
+  # Обставини справи
+  data is_labor_dispute content boolean
+  data is_minor_case content boolean
+  
+  # Неприпустимість представництва (ст. 61)
+  data is_court_secretary_expert_witness content boolean
+  data is_judge_assistant content boolean
+
+declaration scope RepresentationEligibilityCheck:
+  input representative content RepresentativeDetails
+  output can_represent content boolean
+
+scope RepresentationEligibilityCheck:
+  # Загальне правило: представником у суді може бути адвокат або законний представник (ч. 1 ст. 60)
+  definition can_represent =
+    representative.is_attorney or
+    representative.is_legal_representative
+
+  # Виняток: у малозначних спорах та трудових відносинах представником може бути будь-яка повнолітня дієздатна особа (ч. 2 ст. 60)
+  exception definition can_represent = true
+    under condition
+      representative.representative_age >= 18 and
+      representative.is_capable_adult and
+      (representative.is_labor_dispute or representative.is_minor_case)
+    consequence equals true
+
+  # Безумовна заборона представництва для певних категорій осіб (секретарі, експерти, свідки, помічники судді за ст. 61)
+  exception definition can_represent = false
+    under condition
+      representative.is_court_secretary_expert_witness or
+      representative.is_judge_assistant
+    consequence equals false
+```

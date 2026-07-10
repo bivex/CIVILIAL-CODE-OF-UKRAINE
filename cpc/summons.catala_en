@@ -1,0 +1,46 @@
+# СУДОВІ ВИКЛИКИ І ПОВІДОМЛЕННЯ (ст. 128)
+
+## Стаття 128. Судові повістки
+5. Судова повістка про виклик повинна бути вручена не пізніше ніж за п’ять днів до судового засідання.
+8. Днем вручення судової повістки є:
+   1) день вручення під розписку;
+   2) день доставки до електронного кабінету (якщо після 17:00 - вважається врученою наступного робочого дня);
+   3) день проставлення відмітки про відмову або відсутність особи за адресою.
+
+```catala
+# Перевірка вчасності вручення судових повісток (ст. 128)
+declaration structure SummonsDelivery:
+  data hearing_date content date
+  data sent_to_electronic_cabinet content boolean
+  data delivery_timestamp_hour content integer                # наприклад, 18 для 18:00
+  data delivery_date content date
+  data actual_delivery_under_signature_date content date
+  data has_refused_or_absent_mark content boolean
+  data ref_or_absent_mark_date content date
+
+declaration scope SummonsDeliveryCheck:
+  input info content SummonsDelivery
+  output effective_delivery_date content date
+  output was_served_in_time content boolean
+
+scope SummonsDeliveryCheck:
+  # Визначення дня вручення судової повістки (ч. 8 ст. 128)
+  # Якщо в електронний кабінет пізніше 17:00, то вважається врученою наступного робочого дня (ч. 8)
+  let electronic_delivery_date =
+    if info.delivery_timestamp_hour >= 17 then
+      info.delivery_date + 1 day
+    else
+      info.delivery_date
+
+  definition effective_delivery_date =
+    if info.sent_to_electronic_cabinet then
+      electronic_delivery_date
+    else if info.has_refused_or_absent_mark then
+      info.ref_or_absent_mark_date
+    else
+      info.actual_delivery_under_signature_date
+
+  # Повістка про виклик має бути вручена не пізніше ніж за п’ять днів до судового засідання (ч. 5 ст. 128)
+  definition was_served_in_time =
+    effective_delivery_date + 5 day <= info.hearing_date
+```
