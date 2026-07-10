@@ -1,0 +1,45 @@
+# ЗАЛИШЕННЯ ПОЗОВУ БЕЗ РОЗГЛЯДУ (ст. 257)
+
+## Стаття 257. Залишення позову без розгляду
+1. Суд постановляє ухвалу про залишення позову без розгляду, якщо:
+   1) позов подано недієздатною особою;
+   2) позов подано представником без належних повноважень;
+   3) позивач повторно не з'явився у засідання без поважних причин;
+   4) у провадженні суду є ідентичний спір;
+   5) позивач подав заяву про залишення позову без розгляду;
+   6) між сторонами є третейська угода та подано заперечення;
+   8) не сплачено судовий збір та не усунуто недоліки у встановлений строк;
+   9) позивач без поважних причин не подав витребувані судом докази.
+
+```catala
+# Перевірка підстав для залишення позову без розгляду (ст. 257)
+declaration structure PleadingDismissalDetails:
+  data plaintiff_lacks_procedural_capacity content boolean
+  data representative_lacks_authority content boolean
+  data plaintiff_failed_to_appear_twice_without_excuse content boolean
+  data has_duplicate_pending_case content boolean
+  data plaintiff_requested_dismissal content boolean
+  data arbitration_agreement_exists_with_objections content boolean
+  data interested_capable_party_does_not_support_claims content boolean
+  data failed_to_cure_defects_and_pay_court_fee content boolean
+  data failed_to_provide_critical_evidence content boolean
+  data failed_to_deposit_security_for_costs content boolean
+
+declaration scope PleadingsWithoutConsiderationCheck:
+  input details content PleadingDismissalDetails
+  output should_dismiss content boolean
+
+scope PleadingsWithoutConsiderationCheck:
+  # Наявність хоча б однієї з підстав для залишення позову без розгляду (ст. 257)
+  definition should_dismiss =
+    details.plaintiff_lacks_procedural_capacity or
+    details.representative_lacks_authority or
+    details.plaintiff_failed_to_appear_twice_without_excuse or
+    details.has_duplicate_pending_case or
+    details.plaintiff_requested_dismissal or
+    details.arbitration_agreement_exists_with_objections or
+    details.interested_capable_party_does_not_support_claims or
+    details.failed_to_cure_defects_and_pay_court_fee or
+    details.failed_to_provide_critical_evidence or
+    details.failed_to_deposit_security_for_costs
+```

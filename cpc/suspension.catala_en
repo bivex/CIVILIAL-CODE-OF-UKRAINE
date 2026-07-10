@@ -1,0 +1,69 @@
+# ЗУПИНЕННЯ ПРОВАДЖЕННЯ У СПРАВІ (ст. 251-252)
+
+## Стаття 251. Обов’язок суду зупинити провадження у справі
+1. Суд зобов’язаний зупинити провадження у справі у разі:
+   1) смерті фізичної особи, якщо відносини допускають правонаступництво;
+   2) перебування сторони у складі Збройних Сил України, що переведені на воєнний стан;
+   3) призначення законного представника;
+   4) надання строку для примирення подружжя при розлученні;
+   5) проведення процедури медіації (за клопотанням сторін);
+   6) неможливості розгляду справи до вирішення іншої справи.
+
+## Стаття 252. Право суду зупинити провадження у справі
+1. Суд може за заявою або з власної ініціативи зупинити провадження у разі:
+   1) перебування на строковій військовій службі;
+   2) тривалого захворювання сторони, підтвердженого довідкою;
+   3) перебування у довгостроковому службовому відрядженні;
+   4) розшуку відповідача;
+   5) призначення судом експертизи.
+
+```catala
+# Перевірка підстав для зупинення судового провадження (ст. 251, 252)
+declaration structure SuspensionDetails:
+  # Обов'язкові підстави (ст. 251)
+  data party_died_with_succession content boolean
+  data active_military_service_under_martial_law content boolean
+  data legal_representative_appointment_pending content boolean
+  data divorce_reconciliation_period_granted content boolean
+  data mediation_pending content boolean
+  data mediation_with_judge_pending content boolean
+  data impossible_before_another_case_resolved content boolean
+
+  # Факультативні підстави (ст. 252)
+  data non_martial_military_service content boolean
+  data long_term_illness_certified content boolean
+  data long_term_business_trip content boolean
+  data search_for_defendant_active content boolean
+  data expert_evaluation_appointed content boolean
+  data international_judicial_assistance_requested content boolean
+
+declaration scope CaseSuspensionCheck:
+  input details content SuspensionDetails
+  output must_suspend content boolean
+  output may_suspend content boolean
+  output suspension_status_applies content boolean
+
+scope CaseSuspensionCheck:
+  # Обов'язкове зупинення провадження (ст. 251)
+  definition must_suspend =
+    details.party_died_with_succession or
+    details.active_military_service_under_martial_law or
+    details.legal_representative_appointment_pending or
+    details.divorce_reconciliation_period_granted or
+    details.mediation_pending or
+    details.mediation_with_judge_pending or
+    details.impossible_before_another_case_resolved
+
+  # Факультативне зупинення провадження (ст. 252)
+  definition may_suspend =
+    details.non_martial_military_service or
+    details.long_term_illness_certified or
+    details.long_term_business_trip or
+    details.search_for_defendant_active or
+    details.expert_evaluation_appointed or
+    details.international_judicial_assistance_requested
+
+  # Загальний статус зупинення справи
+  definition suspension_status_applies =
+    must_suspend or may_suspend
+```
