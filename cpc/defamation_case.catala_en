@@ -1,0 +1,71 @@
+# ПОЗОВИ ПРО СПРОСТУВАННЯ НЕДОСТОВІРНОЇ ІНФОРМАЦІЇ (ст. 277 ЦКУ, ст. 175, 293 ЦПК)
+
+## Стаття 277 ЦКУ. Спростування недостовірної інформації
+1. Фізична особа, особисті немайнові права якої порушено внаслідок поширення про неї недостовірної інформації, має право на спростування цієї інформації.
+2. Недостовірною вважається інформація, яка не відповідає дійсності або викладена неправдиво.
+3. Оціночні судження не підлягають спростуванню (ст. 30 Закону України "Про інформацію"), крім випадків, коли вони виражені в брутальній, принизливій чи образливій формі.
+
+## Процесуальні вимоги (ЦПК)
+1. Для подання позову загального провадження необхідно встановити особу відповідача (власника джерела поширення).
+2. Якщо особу відповідача встановити неможливо, справа розглядається в порядку окремого провадження про встановлення факту недостовірності інформації (ст. 293 ЦПК).
+3. Електронні докази (скріншоти публікацій) мають бути належним чином засвідчені/збережені (ст. 100 ЦПК).
+
+```catala
+# Логіка оцінки перспектив судового позову проти медіа/Telegram-каналу
+declaration structure DefamationClaimDetails:
+  # Фактичні обставини поширення
+  data information_was_disseminated content boolean
+  data identifies_plaintiff content boolean
+  data is_factual_statement content boolean
+  data is_untrue content boolean
+  data defames_reputation content boolean
+  
+  # Оціночні судження
+  data is_value_judgment content boolean
+  data is_abusive_or_offensive content boolean
+
+  # Процесуальні обставини (ЦПК)
+  data defendant_identity_established content boolean
+  data electronic_evidence_properly_preserved content boolean
+
+declaration scope DefamationLawsuitCheck:
+  input claim content DefamationClaimDetails
+  output has_right_to_retraction content boolean
+  output has_right_to_moral_damages content boolean
+  output procedural_path content string
+  output overall_success_probability content string
+
+scope DefamationLawsuitCheck:
+  # 1. Право на спростування виникає, якщо інформація є недостовірним фактом (ст. 277 ЦКУ)
+  definition has_right_to_retraction =
+    claim.information_was_disseminated and
+    claim.identifies_plaintiff and
+    claim.is_factual_statement and
+    claim.is_untrue and
+    claim.defames_reputation
+
+  # 2. Право на моральну шкоду при образах або недостовірності (ст. 23, 280 ЦКУ)
+  definition has_right_to_moral_damages =
+    has_right_to_retraction or
+    (claim.is_value_judgment and claim.is_abusive_or_offensive and claim.identifies_plaintiff)
+
+  # 3. Визначення процесуального шляху (ст. 175, 293 ЦПК)
+  definition procedural_path =
+    if not (has_right_to_retraction or has_right_to_moral_damages) then
+      "none_no_legal_grounds"
+    else if claim.defendant_identity_established then
+      "general_lawsuit_against_owner" # позовне провадження проти власника
+    else
+      "special_proceedings_fact_finding" # окреме провадження про встановлення факту
+
+  # 4. Оцінка ймовірності успіху справи
+  definition overall_success_probability =
+    if not (has_right_to_retraction or has_right_to_moral_damages) then
+      "zero"
+    else if not claim.electronic_evidence_properly_preserved then
+      "low_evidence_not_secured"
+    else if claim.defendant_identity_established then
+      "high_general_litigation"
+    else
+      "moderate_fact_only_no_monetary_damages"
+```
