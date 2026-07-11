@@ -1,0 +1,30 @@
+# ОРГАНИ, УПОВНОВАЖЕНІ РОЗГЛЯДАТИ СПРАВИ (ст. 235 КУпАП)
+
+## Стаття 235. Територіальні центри комплектування та соціальної підтримки
+1. Територіальні центри комплектування та соціальної підтримки розглядають справи про адміністративні правопорушення, передбачені статтями 210, 210-1, 211 цього Кодексу (крім випадків вчинення їх військовозобов'язаними чи резервістами СБУ або СЗР).
+2. Від імені ТЦК та СП розглядати справи і накладати стягнення мають право керівники територіальних центрів комплектування та соціальної підтримки.
+
+```catala
+# Логіка перевірки юрисдикції ТЦК та СП за ст. 235 КУпАП
+declaration structure CaseJurisdictionDetails:
+  data article_violated content string # "210", "210_1", "211", або інше
+  data subject_belongs_to_sbu_or_szr content boolean
+  data official_issuing_fine content string # "TCC_head" або інше
+
+declaration scope TCCJurisdictionCheck:
+  input info content CaseJurisdictionDetails
+  output is_competent content boolean
+
+scope TCCJurisdictionCheck:
+  # ТЦК компетентний розглядати справу, якщо це статті 210, 210-1, 211 та суб'єкт не є резервістом СБУ/СЗР
+  let article_matches =
+    info.article_violated = "210" or
+    info.article_violated = "210_1" or
+    info.article_violated = "211"
+
+  let subject_eligible = not info.subject_belongs_to_sbu_or_szr
+  let authority_correct = info.official_issuing_fine = "TCC_head"
+
+  definition is_competent =
+    article_matches and subject_eligible and authority_correct
+```

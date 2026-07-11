@@ -1,0 +1,63 @@
+# ПРОЦЕДУРА РОЗГЛЯДУ ТА ОФОРМЛЕННЯ СПРАВ (ст. 258, 268, 277-2 КУпАП)
+
+## Стаття 258. Випадки, коли протокол про адміністративне правопорушення не складається
+*Загальне правило:* Якщо особа оспорює порушення чи стягнення, протокол обов'язково складається.
+*Особливе правило (Закон № 3696-IX від 2024 р.):* Протокол за ст. 210, 210-1 в особливий період не складається у разі неявки особи без поважних причин за умови наявності у ТЦК підтвердних документів про отримання виклику.
+
+## Стаття 268. Права особи, яка притягається до адміністративної відповідальності
+Справа розглядається в присутності особи. За її відсутності справу може бути розглянуто лише у випадках, коли є дані про своєчасне її сповіщення і якщо від неї не надійшло клопотання про відкладення розгляду.
+
+## Стаття 277-2. Повідомлення про розгляд справи
+Повістка особі вручається не пізніш як за три доби (3 дні) до дня розгляду справи в суді (орган ТЦК застосовує цей самий строк згідно з Інструкцією).
+
+```catala
+# Логіка процедурних перевірок оформлення та розгляду справ ТЦК
+declaration structure CaseProcedureDetails:
+  # Дані про правопорушення
+  data article_violated content string
+  data is_special_period content boolean
+  data person_disputes_violation content boolean
+
+  # Дані про повідомлення та присутність
+  data days_between_notification_and_hearing content integer
+  data person_present content boolean
+  data postponement_requested content boolean
+
+  # Умови неявки для ТЦК (Закон № 3696-IX)
+  data failed_to_appear_without_excuse content boolean
+  data tcc_has_delivery_confirmation content boolean
+  data use_2024_amendments content boolean
+
+declaration scope LegalProcedureCheck:
+  input proc content CaseProcedureDetails
+  output is_notification_timely content boolean
+  output can_hear_in_absence content boolean
+  output protocol_required content boolean
+
+scope LegalProcedureCheck:
+  # 1. Своєчасність повідомлення: не менше 3 днів (ст. 277-2)
+  definition is_notification_timely =
+    proc.days_between_notification_and_hearing >= 3
+
+  # 2. Можливість розгляду за відсутності особи (ст. 268)
+  definition can_hear_in_absence =
+    if proc.person_present then
+      true
+    else
+      is_notification_timely and not proc.postponement_requested
+
+  # 3. Необхідність складання протоколу (ст. 258)
+  # За замовчуванням, якщо особа оспорює порушення, протокол потрібен
+  definition protocol_required =
+    proc.person_disputes_violation
+
+  # Виняток 2024 року: ТЦК може винести постанову без протоколу за ст. 210/210-1 в особливий період при неявці
+  exception definition protocol_required = false
+    under condition
+      proc.use_2024_amendments and
+      proc.is_special_period and
+      (proc.article_violated = "210" or proc.article_violated = "210_1") and
+      proc.failed_to_appear_without_excuse and
+      proc.tcc_has_delivery_confirmation
+    consequence equals false
+```

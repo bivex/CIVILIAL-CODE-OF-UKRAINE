@@ -1,0 +1,7 @@
+# CODE OF ADMINISTRATIVE OFFENCES OF UKRAINE (КОДЕКС УКРАЇНИ ПРО АДМІНІСТРАТИВНІ ПРАВОПОРУШЕННЯ - КУпАП)
+
+This is the main entry point for the Ukrainian Code of Administrative Offences, modeled in Catala.
+
+> Include: violations.catala_en
+> Include: jurisdiction.catala_en
+> Include: procedure.catala_en

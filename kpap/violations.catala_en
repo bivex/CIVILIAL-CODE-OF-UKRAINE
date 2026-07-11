@@ -1,0 +1,75 @@
+# ВІЙСЬКОВІ АДМІНІСТРАТИВНІ ПРАВОПОРУШЕННЯ (ст. 210-1 КУпАП)
+
+## Стаття 210-1. Порушення законодавства про оборону, мобілізаційну підготовку та мобілізацію
+
+### Редакція згідно з наданим файлом:
+1. Порушення законодавства про оборону, мобілізаційну підготовку та мобілізацію —
+   тягне за собою накладення штрафу на громадян від 10 до 30 нмдг і на посадових осіб — від 30 до 100 нмдг.
+2. Повторне протягом року вчинення порушення —
+   тягне за собою накладення штрафу на громадян від 30 до 100 нмдг і на посадових осіб — від 100 до 300 нмдг.
+
+### Чинна редакція після Закону № 3696-IX (від 19 травня 2024 року):
+1. У мирний час:
+   - громадяни: від 200 до 300 нмдг (3400–5100 грн)
+   - посадові особи: від 300 до 500 нмдг (5100–8500 грн)
+2. В особливий період (під час дії воєнного стану):
+   - громадяни: від 1000 до 1500 нмдг (17000–25500 грн)
+   - посадові особи: від 2000 до 3500 нмдг (34000–59500 грн)
+
+```catala
+# Логіка обчислення штрафів за ст. 210-1 КУпАП
+declaration structure ViolationDetails210_1:
+  data is_official content boolean
+  data is_repeat_offense content boolean
+  data is_special_period content boolean
+  data nmdg_value content money
+  data use_2024_amendments content boolean
+
+declaration scope FineCalculation210_1:
+  input violation content ViolationDetails210_1
+  output min_fine content money
+  output max_fine content money
+
+scope FineCalculation210_1:
+  let nmdg = violation.nmdg_value
+
+  # 1. Загальне правило: Редакція з наданого файлу
+  definition min_fine =
+    if violation.is_repeat_offense then
+      if violation.is_official then nmdg * 100 else nmdg * 30
+    else
+      if violation.is_official then nmdg * 30 else nmdg * 10
+
+  definition max_fine =
+    if violation.is_repeat_offense then
+      if violation.is_official then nmdg * 300 else nmdg * 100
+    else
+      if violation.is_official then nmdg * 100 else nmdg * 30
+
+  # 2. Виняток: Чинна редакція (Закон № 3696-IX від 2024 р.)
+  exception definition min_fine =
+    if violation.is_special_period then
+      if violation.is_official then nmdg * 2000 else nmdg * 1000
+    else
+      if violation.is_official then nmdg * 300 else nmdg * 200
+    under condition
+      violation.use_2024_amendments
+    consequence equals
+      if violation.is_special_period then
+        if violation.is_official then nmdg * 2000 else nmdg * 1000
+      else
+        if violation.is_official then nmdg * 300 else nmdg * 200
+
+  exception definition max_fine =
+    if violation.is_special_period then
+      if violation.is_official then nmdg * 3500 else nmdg * 1500
+    else
+      if violation.is_official then nmdg * 500 else nmdg * 300
+    under condition
+      violation.use_2024_amendments
+    consequence equals
+      if violation.is_special_period then
+        if violation.is_official then nmdg * 3500 else nmdg * 1500
+      else
+        if violation.is_official then nmdg * 500 else nmdg * 300
+```
