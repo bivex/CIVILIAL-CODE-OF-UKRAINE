@@ -43,4 +43,24 @@ scope LawsuitAdmissibilityCheck:
   # 3. Прийняття позову до розгляду
   definition can_accept_lawsuit =
     is_filing_timely
+
+## Порядок подання відзиву та наслідки неповідомлення позивача (ст. 162, 167 КАСУ)
+Якщо відповідач подає відзив, він зобов'язаний надіслати його копію позивачу. У разі ненадання доказів надсилання відзиву позивачу, суд залишає такий відзив без розгляду.
+
+```catala
+declaration structure DefendantResponseDetails:
+  data response_submitted content boolean
+  data copy_sent_to_plaintiff content boolean
+  data has_proof_of_service content boolean
+
+declaration scope DefendantResponseEvaluation:
+  input response content DefendantResponseDetails
+  output response_left_without_consideration content boolean
+
+scope DefendantResponseEvaluation:
+  # Відзив залишається без розгляду, якщо немає доказів його надсилання позивачу (ст. 162, 167 КАСУ)
+  definition response_left_without_consideration =
+    response.response_submitted and
+    (not response.copy_sent_to_plaintiff or not response.has_proof_of_service)
 ```
+
