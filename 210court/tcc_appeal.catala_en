@@ -31,6 +31,8 @@ declaration structure TCCAppealDetails:
   data summons_document_present_in_case content boolean          # чи наявні у матеріалах справи сама повістка та докази її відправлення
   data date_absent_mark_placed content integer                   # дата проставлення відмітки «відсутній за адресою» на поштовому відправленні
   data resolution_specifies_missing_data content boolean         # чи зазначено у постанові, які саме дані не було оновлено (ст. 280 КУпАП)
+  data person_registered_at_issuing_tcc content boolean          # чи є ТЦК, що видав постанову, ТЦК за місцем реєстрації (п.79 КМУ № 1487)
+  data delivery_procedure_was_lawful content boolean             # чи дотримана процедура доставлення (поліція + формальне звернення, п.56 КМУ № 1487)
 
 declaration scope TCCAppealEvaluation:
   input appeal content TCCAppealDetails
@@ -42,6 +44,8 @@ declaration scope TCCAppealEvaluation:
   output no_corpus_delicti content boolean
   output absent_mark_placed_after_appearance content boolean
   output resolution_vague_on_missing_data content boolean
+  output wrong_tcc_jurisdiction content boolean
+  output unlawful_delivery_procedure content boolean
   output resolution_should_be_canceled content boolean
 
 scope TCCAppealEvaluation:
@@ -100,7 +104,19 @@ scope TCCAppealEvaluation:
   definition resolution_vague_on_missing_data =
     not appeal.resolution_specifies_missing_data
 
-  # 8. Загальний висновок: постанова підлягає скасуванню, якщо є хоча б одне порушення
+  # 9. Постанову видав ТЦК, що не є ТЦК за місцем реєстрації особи (п.79 абз.16 КМУ № 1487)
+  # Навіть якщо поліція законно доставила до «найближчого» ТЦК —
+  # протокол і постанову може складати ТІЛЬКИ ТЦК за місцем реєстрації.
+  definition wrong_tcc_jurisdiction =
+    not appeal.person_registered_at_issuing_tcc
+
+  # 10. Порушення процедури доставлення (п.56 КМУ № 1487)
+  # Доставити може тільки поліція, тільки після офіційного звернення ТЦК з КЕП.
+  # Самостійне «захоплення» ТЦК є незаконним і є підставою для скасування.
+  definition unlawful_delivery_procedure =
+    not appeal.delivery_procedure_was_lawful
+
+  # 11. Загальний висновок: постанова підлягає скасуванню, якщо є хоча б одне порушення
   definition resolution_should_be_canceled =
     statute_of_limitations_expired or
     procedural_rights_violated or
@@ -110,6 +126,8 @@ scope TCCAppealEvaluation:
     no_corpus_delicti or
     absent_mark_placed_after_appearance or
     resolution_vague_on_missing_data or
+    wrong_tcc_jurisdiction or
+    unlawful_delivery_procedure or
     appeal.has_valid_deferment
 ```
 
