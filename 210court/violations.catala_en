@@ -73,3 +73,49 @@ scope FineCalculation210_1:
       else
         if violation.is_official then nmdg * 500 else nmdg * 300
 ```
+
+## Перевірка законності визнання електронного ВОД недійсним (Постанова КМУ № 559 від 16.05.2024)
+
+### Підстави для визнання ВОД недійсним (п. 3 Постанови № 559 — вичерпний перелік):
+Електронний ВОД є недійсним **виключно** якщо дані у графах **1–5, 13, 14** не відповідають Єдиному державному реєстру призовників.
+
+### Що НЕ є підставою для недійсності (п. 8 Постанови № 559):
+Відсутність у QR-коді **необов`язкових** полів — військового звання (п. 9) та ВОС (п. 10). Ці дані відображаються лише **за наявності** у реєстрі і не входять до п. 3.
+
+### Справа-прецедент: 760/31160/24 (16.12.2025, суддя Букіна О.М.)
+ТЦК визнав ВОД недійсним через відсутність військового звання та ВОС. Суд скасував постанову — документ був дійсним, склад правопорушення відсутній.
+
+```catala
+declaration structure ElectronicMilitaryDocumentDetails:
+  # Поля п. 3 Постанови № 559 — невідповідність реєстру є підставою недійсності
+  data fields_1_5_match_registry content boolean         # прізвище, ім'я, по батькові, дата нар., РНОКПП
+  data field_13_matches_registry content boolean         # відомості про військовий облік
+  data field_14_matches_registry content boolean         # відомості щодо звернень до поліції
+  # Необов'язкові поля п. 8 — їхня відсутність НЕ впливає на дійсність
+  data has_military_rank_displayed content boolean       # чи відображається військове звання
+  data has_military_specialty_displayed content boolean  # чи відображається ВОС
+  # Підстава, яку ТЦК вказав для визнання ВОД недійсним
+  data tcc_reason_is_missing_rank_or_specialty content boolean
+
+declaration scope ElectronicMilitaryDocumentCheck:
+  input doc content ElectronicMilitaryDocumentDetails
+  output document_is_valid content boolean
+  output tcc_invalidity_claim_is_unlawful content boolean
+  output no_offense_committed content boolean
+
+scope ElectronicMilitaryDocumentCheck:
+  # 1. Дійсність: усі обов'язкові поля п. 3 відповідають реєстру
+  definition document_is_valid =
+    doc.fields_1_5_match_registry and
+    doc.field_13_matches_registry and
+    doc.field_14_matches_registry
+
+  # 2. Претензія ТЦК незаконна: послався на підставу, якої немає у п. 3 Постанови № 559
+  # Відсутність звання/ВОС — необов'язкові дані п. 8, що не входять до вичерпного п. 3.
+  definition tcc_invalidity_claim_is_unlawful =
+    doc.tcc_reason_is_missing_rank_or_specialty
+
+  # 3. Якщо ВОД дійсний і претензія незаконна — склад правопорушення відсутній (ст. 9, 247 КУпАП)
+  definition no_offense_committed =
+    document_is_valid and tcc_invalidity_claim_is_unlawful
+```
