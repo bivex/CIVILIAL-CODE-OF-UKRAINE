@@ -148,3 +148,109 @@ scope AutoRegistrationApplicabilityCheck:
   definition forced_appearance_unlawful =
     can_be_registered_automatically
 ```
+
+## Процедура примусового доставлення до ТЦК — п.56 та п.79 Порядку
+
+### Що постанова говорить буквально:
+
+**П. 56 абз. 3** (в редакції Постанови КМУ № 1217 від 22.10.2024):
+> Національна поліція здійснює **адміністративне затримання та доставлення** за **зверненням ТЦК**, надісланим через **єдину інформаційну систему МВС**.
+> Доставляє до **найближчого** районного (міського) ТЦК.
+
+**П. 79 абз. 16**:
+> ТЦК звертаються до поліції для доставлення осіб до **відповідного** ТЦК,
+> **в якому ця особа перебуває (повинна перебувати) на військовому обліку**.
+
+### Обов'язкові умови для законного доставлення (всі мають виконуватись одночасно):
+
+| # | Умова | Норма |
+|---|---|---|
+| 1 | Ініціатор — **ТЦК** де особа на обліку, не будь-який ТЦК | п.79 абз.16 |
+| 2 | Звернення до поліції через **е-взаємодію реєстрів** (або письмово — тільки якщо немає технічної можливості) | п.56 абз.3 |
+| 3 | Звернення містить: ПІБ, адресу, дату нар., **конкретну підставу** (яка ст. КУпАП), унікальний номер, **КЕП** | п.56 абз.3 |
+| 4 | Доставляти може **тільки поліція**, не ТЦК самостійно | п.56 |
+| 5 | Якщо підстав немає — ТЦК **зобов'язаний повідомити поліцію** про відсутність підстав (п.79 абз.17) | п.79 абз.17 |
+| 6 | Протокол складає ТЦК **за місцем реєстрації** особи, не «найближчий» | п.79 абз.16 |
+
+### Що з цього випливає:
+- **ТЦК не має права самостійно «забирати» людину** — це виключна компетенція поліції після офіційного звернення через е-реєстр
+- **Чужий ТЦК не може скласти протокол** — він може лише прийняти доставлену поліцією особу тимчасово; протокол і постанову складає ТЦК за місцем реєстрації
+- **Без КЕП та унікального номера звернення** — доставлення незаконне за будь-яких обставин
+
+```catala
+declaration structure ForcedDeliveryDetails:
+  data delivery_initiated_by_tcc_of_registration content boolean   # звернення від ТЦК де особа на обліку
+  data delivery_request_sent_via_e_registry content boolean        # через МВС / е-взаємодію реєстрів
+  data request_contains_legal_basis content boolean                # вказано конкретну статтю КУпАП
+  data request_has_kes_signature content boolean                   # є КЕП уповноваженої особи ТЦК
+  data request_has_unique_number content boolean                   # є унікальний вихідний номер
+  data delivery_performed_by_police content boolean                # доставляла саме поліція, не ТЦК
+  data protocol_issued_by_registration_tcc content boolean         # протокол склав ТЦК за місцем обліку
+  data person_had_committed_offense_before_delivery content boolean # порушення дійсно було до доставлення
+
+declaration scope ForcedDeliveryLegalityCheck:
+  input del content ForcedDeliveryDetails
+  output request_is_formally_valid content boolean
+  output delivery_is_lawful content boolean
+  output protocol_is_from_wrong_tcc content boolean
+  output delivery_grounds_absent content boolean
+  output entire_procedure_unlawful content boolean
+
+scope ForcedDeliveryLegalityCheck:
+  # 1. Перевірка формальності звернення до поліції (п.56 абз.3)
+  # Всі 4 реквізити обов'язкові одночасно:
+  definition request_is_formally_valid =
+    del.delivery_request_sent_via_e_registry and
+    del.request_contains_legal_basis and
+    del.request_has_kes_signature and
+    del.request_has_unique_number
+
+  # 2. Доставлення законне тільки якщо: звернення формальне + від ТЦК обліку + поліцією
+  definition delivery_is_lawful =
+    request_is_formally_valid and
+    del.delivery_initiated_by_tcc_of_registration and
+    del.delivery_performed_by_police
+
+  # 3. Протокол від чужого ТЦК — пряме порушення п.79 абз.16
+  # Навіть якщо доставлення було законним — протокол може складати
+  # лише ТЦК, де особа перебуває на обліку.
+  definition protocol_is_from_wrong_tcc =
+    not del.protocol_issued_by_registration_tcc
+
+  # 4. Відсутність підстав для доставлення (п.79 абз.17):
+  # Якщо порушення не було — ТЦК зобов'язаний був повідомити поліцію
+  # про відсутність підстав до того, як поліція здійснила доставлення.
+  definition delivery_grounds_absent =
+    not del.person_had_committed_offense_before_delivery
+
+  # 5. Загальний висновок: вся процедура незаконна якщо будь-що з цього порушено
+  definition entire_procedure_unlawful =
+    not delivery_is_lawful or
+    protocol_is_from_wrong_tcc or
+    delivery_grounds_absent
+```
+
+## Сценарій «завезли в чужий ТЦК» — типові значення полів
+
+```catala
+# Типовий сценарій: ТЦК «Солом'янський» забрав людину на вулиці
+# Людина зареєстрована в Деснянському р-ні. Не порушувала нічого.
+#
+# let del = ForcedDeliveryDetails {
+#   delivery_initiated_by_tcc_of_registration = false    # Солом'янський ТЦК ≠ Деснянський ТЦК
+#   delivery_request_sent_via_e_registry      = false    # не було звернення через е-систему
+#   request_contains_legal_basis              = false    # не було формального звернення
+#   request_has_kes_signature                 = false    # не було КЕП
+#   request_has_unique_number                 = false    # не було унікального номера
+#   delivery_performed_by_police              = false    # забрав сам ТЦК, не поліція
+#   protocol_issued_by_registration_tcc       = false    # протокол склав Солом'янський, не Деснянський
+#   person_had_committed_offense_before_delivery = false # порушень не було
+# }
+#
+# Результати:
+#   request_is_formally_valid    = false  ← немає жодного реквізиту
+#   delivery_is_lawful           = false  ← незаконне за всіма підставами
+#   protocol_is_from_wrong_tcc   = true   ← протокол від чужого ТЦК
+#   delivery_grounds_absent      = true   ← підстав не було
+#   entire_procedure_unlawful    = true   ← ВСЯ ПРОЦЕДУРА НЕЗАКОННА
+```
