@@ -64,3 +64,28 @@ scope TCCAppealEvaluation:
     protocol_procedure_violated or
     appeal.has_valid_deferment
 ```
+
+## Логіка перевірки існування постанови («фантомні штрафи» у Резерв+)
+Якщо у базі даних «Оберіг» відображається статус про порушення, але ТЦК заперечує факт винесення постанови, позов про скасування постанови відхиляється через відсутність предмета спору, але громадянин отримує право вимагати вилучення запису з бази даних.
+
+```catala
+declaration structure ResolutionExistenceDetails:
+  data has_physical_resolution content boolean
+  data tcc_denies_existence content boolean
+  data reserve_plus_shows_violation content boolean
+
+declaration scope ResolutionExistenceCheck:
+  input info content ResolutionExistenceDetails
+  output lawsuit_must_be_dismissed content boolean
+  output database_record_is_unlawful content boolean
+
+scope ResolutionExistenceCheck:
+  # 1. Суд відмовляє у скасуванні постанови, якщо її фактично не існує (немає предмета оскарження)
+  definition lawsuit_must_be_dismissed =
+    not info.has_physical_resolution or info.tcc_denies_existence
+
+  # 2. Запис у реєстрі "Оберіг" є неправомірним, якщо ТЦК офіційно заперечує наявність провадження
+  definition database_record_is_unlawful =
+    info.reserve_plus_shows_violation and info.tcc_denies_existence
+```
+
