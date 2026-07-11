@@ -12,6 +12,7 @@
 declaration structure TCCAppealDetails:
   # Часові мітки (у днях від умовної точки відліку)
   data date_appearance_required content integer                 # дата явки за повісткою
+  data date_summons_sent content integer                         # дата фактичного відправлення повістки поштою
   data date_mail_returned_to_tcc content integer                 # дата повернення поштового конверта (виявлення)
   data date_resolution_issued content integer                    # дата винесення постанови
   
@@ -28,6 +29,7 @@ declaration scope TCCAppealEvaluation:
   output statute_of_limitations_expired content boolean
   output procedural_rights_violated content boolean
   output protocol_procedure_violated content boolean
+  output notification_is_invalid content boolean
   output resolution_should_be_canceled content boolean
 
 scope TCCAppealEvaluation:
@@ -57,13 +59,19 @@ scope TCCAppealEvaluation:
     appeal.person_disputes_violation and
     is_notified_only_via_returned_mail
 
-  # 4. Загальний висновок суду: постанова підлягає скасуванню, якщо є хоча б одне порушення
+  # 4. Перевірка належності сповіщення (повістка відправлена поштою після дати явки)
+  definition notification_is_invalid =
+    appeal.date_summons_sent >= appeal.date_appearance_required
+
+  # 5. Загальний висновок суду: постанова підлягає скасуванню, якщо є хоча б одне порушення
   definition resolution_should_be_canceled =
     statute_of_limitations_expired or
     procedural_rights_violated or
     protocol_procedure_violated or
+    notification_is_invalid or
     appeal.has_valid_deferment
 ```
+
 
 ## Логіка перевірки існування постанови («фантомні штрафи» у Резерв+)
 Якщо у базі даних «Оберіг» відображається статус про порушення, але ТЦК заперечує факт винесення постанови, позов про скасування постанови відхиляється через відсутність предмета спору, але громадянин отримує право вимагати вилучення запису з бази даних.
