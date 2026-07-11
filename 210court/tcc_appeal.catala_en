@@ -13,7 +13,7 @@ declaration structure TCCAppealDetails:
   # Часові мітки (у днях від умовної точки відліку)
   data date_appearance_required content integer                 # дата явки за повісткою
   data date_summons_sent content integer                         # дата фактичного відправлення повістки поштою
-  data date_mail_returned_to_tcc content integer                 # дата повернення поштового конверта (виявлення)
+  data date_discovery_of_violation content integer               # дата виявлення (повернення пошти або внесення в розшук)
   data date_resolution_issued content integer                    # дата винесення постанови
   
   # Процедурні аспекти
@@ -23,6 +23,8 @@ declaration structure TCCAppealDetails:
   data has_proof_of_personal_delivery content boolean            # наявність підпису про вручення повістки
   data person_disputes_violation content boolean
   data has_valid_deferment content boolean                       # наявність діючої відстрочки від мобілізації
+  data admission_submitted_under_279_9 content boolean           # чи подано заяву про неоспорення за ст. 279-9 КУпАП
+  data date_admission_submitted content integer                  # дата подання заяви за ст. 279-9 КУпАП
 
 declaration scope TCCAppealEvaluation:
   input appeal content TCCAppealDetails
@@ -34,9 +36,10 @@ declaration scope TCCAppealEvaluation:
 
 scope TCCAppealEvaluation:
   # 1. Перевірка строків давності за ст. 38 КУпАП (3 місяці = 90 днів з дня виявлення)
-  # Виявленням є день отримання ТЦК інформації про неявку (повернення листа)
+  # Виявленням є день повернення листа або день внесення до бази розшуку ТЦК
   definition statute_of_limitations_expired =
-    appeal.date_resolution_issued - appeal.date_mail_returned_to_tcc > 90
+    appeal.date_resolution_issued - appeal.date_discovery_of_violation > 90
+
 
   # 2. Перевірка порушення процесуальних прав за ст. 268, 277-2 КУпАП
   definition procedural_rights_violated =
