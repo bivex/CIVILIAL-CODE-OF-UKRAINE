@@ -1,0 +1,46 @@
+# ДОКАЗИ ТА СТРОКИ В АДМІНІСТРАТИВНОМУ СУДОЧИНСТВІ (ст. 77, 121, 123 КАСУ)
+
+## Стаття 77. Обов'язок доказування
+1. Кожна сторона повинна довести ті обставини, на яких ґрунтуються її вимоги та заперечення.
+2. В адміністративних справах про протиправність рішень, дій чи бездіяльності суб’єкта владних повноважень обов’язок щодо доказування правомірності свого рішення, дії чи бездіяльності покладається на відповідача.
+
+## Стаття 121. Поновлення та продовження процесуальних строків
+1. Суд за заявою учасника справи поновлює пропущений процесуальний строк, встановлений законом, якщо визнає причини його пропуску поважними.
+
+## Стаття 123. Наслідки пропуску строків звернення до адміністративного суду
+1. Якщо позовну заяву подано після закінчення строків звернення, суд залишає її без руху, а у разі неподання заяви про поновлення строку або визнання причин неповажними — відмовляє у відкритті чи закриває провадження.
+
+```catala
+# Логіка прийнятності адміністративного позову за строками та доказами
+declaration structure LawsuitFilingDetails:
+  data days_since_resolution_received content integer
+  data requested_term_restoration content boolean
+  data has_valid_reasons_for_delay content boolean
+  data defendant_is_public_authority content boolean
+
+declaration scope LawsuitAdmissibilityCheck:
+  input filing content LawsuitFilingDetails
+  output is_filing_timely content boolean
+  output burden_of_proof_shifted_to_defendant content boolean
+  output can_accept_lawsuit content boolean
+
+scope LawsuitAdmissibilityCheck:
+  # 1. Строк оскарження постанови становить 10 днів (ст. 286 КАСУ)
+  definition is_filing_timely =
+    filing.days_since_resolution_received <= 10
+
+  # Поновлення пропущеного строку за поважних причин (ст. 121)
+  exception definition is_filing_timely = true
+    under condition
+      filing.requested_term_restoration and
+      filing.has_valid_reasons_for_delay
+    consequence equals true
+
+  # 2. Обов'язок доказування покладається на відповідача (ч. 2 ст. 77)
+  definition burden_of_proof_shifted_to_defendant =
+    filing.defendant_is_public_authority
+
+  # 3. Прийняття позову до розгляду
+  definition can_accept_lawsuit =
+    is_filing_timely
+```

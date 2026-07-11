@@ -1,0 +1,14 @@
+# CODE OF ADMINISTRATIVE PROCEDURE OF UKRAINE (КОДЕКС АДМІНІСТРАТИВНОГО СУДОЧИНСТВА УКРАЇНИ - КАСУ)
+
+This is the main entry point for the Ukrainian Code of Administrative Procedure, modeled in Catala.
+
+# Підключення суміжних норм КУпАП
+> Include: violations.catala_en
+> Include: jurisdiction.catala_en
+> Include: procedure.catala_en
+
+
+# Модулі КАСУ
+> Include: evidence_and_terms.catala_en
+> Include: court_ruling.catala_en
+> Include: tcc_appeal.catala_en

@@ -1,0 +1,31 @@
+# СУДОВІ РІШЕННЯ ТА КОМПЕНСАЦІЯ ВИТРАТ (ст. 90, 139, 241-246 КАСУ)
+
+## Стаття 139. Розподіл судових витрат
+1. При задоволенні позову сторони, яка не є суб’єктом владних повноважень, всі судові витрати, які підлягають відшкодуванню або оплаті відповідно до положень цього Кодексу, стягуються за рахунок бюджетних асигнувань суб’єкта владних повноважень, що виступав відповідачем у справі.
+
+## Стаття 242. Законність і обґрунтованість судового рішення
+1. Рішення суду повинно бути законним і обґрунтованим. Законним є рішення, ухвалене судом відповідно до норм матеріального права при дотриманні норм процесуального права.
+
+```catala
+# Логіка визначення відшкодування судових витрат (ст. 139)
+declaration structure CourtDecisionDetails:
+  data lawsuit_satisfied content boolean
+  data court_fee_paid content money
+  data other_litigation_costs content money
+
+declaration scope CourtRulingEvaluation:
+  input decision content CourtDecisionDetails
+  output reimburse_court_fee_from_state_budget content boolean
+  output reimbursed_amount content money
+
+scope CourtRulingEvaluation:
+  # Якщо позов задоволено, судовий збір стягується з бюджету відповідача (ч. 1 ст. 139)
+  definition reimburse_court_fee_from_state_budget =
+    decision.lawsuit_satisfied
+
+  definition reimbursed_amount =
+    if reimburse_court_fee_from_state_budget then
+      decision.court_fee_paid + decision.other_litigation_costs
+    else
+      money_of_integer(0)
+```

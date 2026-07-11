@@ -1,0 +1,66 @@
+# ОСКАРЖЕННЯ НЕПРАВОМІРНИХ ДІЙ ТА ПОСТАНОВ ТЦК ТА СП (ст. 9, 21 КАСУ, ст. 38, 258, 268, 277-2 КУпАП)
+
+## Логіка оскарження постанови ТЦК про накладення штрафу
+Позивач може успішно оскаржити постанову ТЦК та СП у суді за наявності хоча б однієї з таких підстав:
+1. **Закінчення строків притягнення до відповідальності (ст. 38 КУпАП)**: стягнення може бути накладено не пізніше як через 3 місяці з дня виявлення правопорушення (повернення поштового відправлення з відміткою про відсутність особи є днем виявлення правопорушення).
+2. **Порушення права на участь та захист (ст. 268, 277-2 КУпАП)**: справу розглянуто без участі особи, без належного сповіщення за 3 дні до розгляду або попри подане клопотання про відкладення.
+3. **Порушення процедури складання протоколу (ст. 258 КУпАП)**: протокол не складався за відсутності підтвердження вручення повістки (саме отримання виклику, а не повернення через відсутність адресата).
+4. **Відсутність складу правопорушення**: наявність у особи чинної відстрочки від призову.
+
+```catala
+# Область перевірки правомірності постанови ТЦК у суді за правилами КАСУ та КУпАП
+declaration structure TCCAppealDetails:
+  # Часові мітки (у днях від умовної точки відліку)
+  data date_appearance_required content integer                 # дата явки за повісткою
+  data date_mail_returned_to_tcc content integer                 # дата повернення поштового конверта (виявлення)
+  data date_resolution_issued content integer                    # дата винесення постанови
+  
+  # Процедурні аспекти
+  data days_notice_before_hearing content integer                # строк повідомлення про розгляд справи
+  data person_present_at_hearing content boolean
+  data postponement_requested content boolean
+  data has_proof_of_personal_delivery content boolean            # наявність підпису про вручення повістки
+  data person_disputes_violation content boolean
+  data has_valid_deferment content boolean                       # наявність діючої відстрочки від мобілізації
+
+declaration scope TCCAppealEvaluation:
+  input appeal content TCCAppealDetails
+  output statute_of_limitations_expired content boolean
+  output procedural_rights_violated content boolean
+  output protocol_procedure_violated content boolean
+  output resolution_should_be_canceled content boolean
+
+scope TCCAppealEvaluation:
+  # 1. Перевірка строків давності за ст. 38 КУпАП (3 місяці = 90 днів з дня виявлення)
+  # Виявленням є день отримання ТЦК інформації про неявку (повернення листа)
+  definition statute_of_limitations_expired =
+    appeal.date_resolution_issued - appeal.date_mail_returned_to_tcc > 90
+
+  # 2. Перевірка порушення процесуальних прав за ст. 268, 277-2 КУпАП
+  definition procedural_rights_violated =
+    if appeal.person_present_at_hearing then
+      false
+    else
+      # Порушено, якщо повідомлено менш ніж за 3 дні або проігноровано клопотання про відкладення
+      appeal.days_notice_before_hearing < 3 or appeal.postponement_requested
+
+  # 3. Перевірка колізії норм: ст. 258 КУпАП (Закон) проти п. 41 Постанови КМУ № 560 (підзаконний акт)
+  # Закон вимагає "отримання особою виклику" (підпис або відеозапис).
+  # Постанова № 560 допускає фіксацію "відсутності особи за адресою" як належне сповіщення.
+  # Згідно з принципом верховенства права (ст. 8 Конституції, ст. 9 КАСУ), пріоритет має Закон (КУпАП).
+  # Отже, якщо ТЦК виніс постанову без протоколу на підставі лише повернутого поштового конверта,
+  # це є прямим порушенням ст. 258 КУпАП.
+  let is_notified_only_via_returned_mail =
+    not appeal.has_proof_of_personal_delivery
+
+  definition protocol_procedure_violated =
+    appeal.person_disputes_violation and
+    is_notified_only_via_returned_mail
+
+  # 4. Загальний висновок суду: постанова підлягає скасуванню, якщо є хоча б одне порушення
+  definition resolution_should_be_canceled =
+    statute_of_limitations_expired or
+    procedural_rights_violated or
+    protocol_procedure_violated or
+    appeal.has_valid_deferment
+```
