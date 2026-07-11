@@ -1,0 +1,167 @@
+# МОБІЛІЗАЦІЙНА ПРОЦЕДУРА — ОБОВ'ЯЗКОВІ ПЕРЕДУМОВИ
+# Підстави: ч.3 ст.33, ч.ч.1,3,5 ст.37 ЗУ «Про військовий обов'язок і військову службу»
+#            ст.23 ЗУ «Про мобілізаційну підготовку та мобілізацію»
+#            п.п.15, 16, абз.18 п.56 КМУ № 921 (до 2022), п.79 КМУ № 1487 (з 2022)
+#            Положення №402 МО України (медичний огляд)
+#
+# Прецедент: Постанова П'ятого апеляційного адміністративного суду
+#            від 19.05.2025 у справі № 420/31631/23
+#
+# Висновок суду: Мобілізація без: (1) обліку в ТЦК за місцем реєстрації,
+# (2) особистої присутності при знятті з обліку, (3) повістки, (4) ВЛК —
+# є незаконною. ВСІ накази про мобілізацію, призначення, зарахування
+# підлягають скасуванню незалежно від того, чи фактично особа служила.
+
+## Стаття 23 ЗУ «Про мобілізаційну підготовку та мобілізацію»
+Призову підлягають військовозобов'язані, які визнані **придатними до військової служби**
+за станом здоров'я відповідно до висновку **військово-лікарської комісії (ВЛК)**.
+
+## Ч.2 ст.77 КАС України — тягар доказування
+В адміністративних справах про протиправність рішень суб'єкта владних повноважень
+**обов'язок щодо доказування правомірності** свого рішення покладається **на відповідача (ТЦК)**.
+
+```catala
+declaration structure MobilizationDetails:
+  # 1. Підсудність: облік за місцем реєстрації
+  data person_registered_address_tcc content string          # ТЦК за місцем реєстрації особи
+  data tcc_that_issued_mobilization_order content string     # ТЦК, що видав наказ про мобілізацію
+  data person_registered_at_mobilizing_tcc content boolean   # чи є вони однаковими
+
+  # 2. Особиста присутність при знятті з обліку (абз.18 п.56 КМУ 921 / п.79 КМУ 1487)
+  data person_personally_present_at_deregistration content boolean
+  data person_personally_present_at_registration content boolean
+
+  # 3. Виклик (повістка) перед мобілізацією (ч.ч.1,3 ст.22 ЗУ «Про мобілізацію»)
+  data summons_issued_before_mobilization content boolean    # чи була повістка
+  data person_received_summons content boolean               # чи отримала особа повістку
+
+  # 4. Медичний огляд ВЛК (ст.23 ЗУ «Про мобілізацію», Положення №402)
+  data vlk_examination_conducted content boolean             # чи проводився медогляд ВЛК
+  data vlk_conclusion_fit_for_service content boolean        # висновок ВЛК «придатний»
+
+  # 5. Фактична реалізація наказів (важливо: суд скасував навіть нереалізовані)
+  data person_actually_served content boolean                # чи фактично проходив службу
+  data person_acknowledged_orders content boolean            # чи ознайомлений із наказами
+
+declaration scope MobilizationPrerequisitesCheck:
+  input mob content MobilizationDetails
+  output wrong_tcc_mobilized content boolean
+  output deregistration_without_presence content boolean
+  output no_summons_before_mobilization content boolean
+  output vlk_prerequisite_missing content boolean
+  output mobilization_orders_unlawful content boolean
+  output all_orders_must_be_canceled content boolean
+
+scope MobilizationPrerequisitesCheck:
+  # 1. Чужий ТЦК видав наказ про мобілізацію (ч.3 ст.33 ЗУ, п.15,16 КМУ)
+  # Облік прив'язаний до місця реєстрації — мобілізувати може тільки свій ТЦК.
+  definition wrong_tcc_mobilized =
+    not mob.person_registered_at_mobilizing_tcc
+
+  # 2. Зняття/взяття на облік без особистої присутності (абз.18 п.56 КМУ 921 / п.79 КМУ 1487)
+  # «Взяття на військовий облік, зняття та виключення здійснюється за особистої присутності»
+  definition deregistration_without_presence =
+    not mob.person_personally_present_at_deregistration or
+    not mob.person_personally_present_at_registration
+
+  # 3. Мобілізація без виклику (ч.1 ст.22 ЗУ «Про мобілізацію»)
+  # Обов'язок з'явитися виникає ТІЛЬКИ після отримання повістки.
+  definition no_summons_before_mobilization =
+    not mob.summons_issued_before_mobilization or
+    not mob.person_received_summons
+
+  # 4. Відсутність ВЛК — обов'язкова умова мобілізації (ст.23 ЗУ «Про мобілізацію»)
+  # Без висновку ВЛК «придатний» — наказ про мобілізацію незаконний.
+  # Важливо: ВЛК має проводити ТЦК за місцем обліку — не будь-хто.
+  definition vlk_prerequisite_missing =
+    not mob.vlk_examination_conducted or
+    not mob.vlk_conclusion_fit_for_service
+
+  # 5. Загальний висновок: мобілізаційні накази незаконні
+  # Хоча б одне порушення → всі накази незаконні.
+  definition mobilization_orders_unlawful =
+    wrong_tcc_mobilized or
+    deregistration_without_presence or
+    no_summons_before_mobilization or
+    vlk_prerequisite_missing
+
+  # 6. Скасуванню підлягають ВСІ накази, включаючи службові розслідування
+  # Прецедент 420/31631/23: суд скасував навіть нереалізовані накази та наказ
+  # про службове розслідування «самовільного залишення частини».
+  # Логіка: якщо мобілізація незаконна — особа ніколи не була військовослужбовцем,
+  # отже не могла «самовільно залишити» частину.
+  definition all_orders_must_be_canceled =
+    mobilization_orders_unlawful
+    # Примітка: НЕ важливо, чи особа фактично служила чи ні —
+    # mob.person_actually_served не впливає на скасування.
+    # НЕ важливо, чи ознайомлена з наказами —
+    # mob.person_acknowledged_orders не рятує незаконні накази.
+```
+
+## Які накази суд скасував (прецедент 420/31631/23)
+
+```catala
+# Типи наказів, що підлягають скасуванню при незаконній мобілізації:
+declaration enumeration MobilizationOrderType :
+  -- MobilizationCallUpOrder         # наказ про призов за мобілізацією
+  -- AssignmentToPositionOrder       # наказ про призначення на посаду
+  -- EnrollmentInPersonnelOrder      # наказ про зарахування до списків особового складу
+  -- ServiceInvestigationOrder       # наказ про службове розслідування (!!!)
+  -- MilitaryServiceSuspensionOrder  # наказ про призупинення військової служби (!!!)
+
+# Примітка: суд скасував ServiceInvestigationOrder (за «самовільне залишення»)
+# та MilitaryServiceSuspensionOrder — бо якщо мобілізація незаконна,
+# особа ніколи не набула статусу військовослужбовця → ці накази беззмістовні.
+```
+
+## Тягар доказування (ч.2 ст.77 КАС України)
+
+**Ключовий принцип**: ТЦК (відповідач) зобов'язаний довести законність своїх дій.
+Якщо ТЦК не надав суду:
+- Копію особової справи
+- Докази вручення повістки
+- Докази ВЛК
+- Докази особистої присутності при знятті з обліку
+
+→ Суд вважає ці обставини **недоведеними**, що автоматично означає незаконність наказів.
+
+```catala
+declaration structure EvidenceInCase:
+  data tcc_provided_personal_file content boolean            # надана особова справа
+  data tcc_provided_summons_proof content boolean            # докази вручення повістки
+  data tcc_provided_vlk_proof content boolean                # докази ВЛК
+  data tcc_provided_presence_proof content boolean           # докази особистої присутності
+
+declaration scope BurdenOfProofCheck:
+  input evidence content EvidenceInCase
+  output tcc_met_burden_of_proof content boolean
+  output presumption_of_unlawfulness content boolean
+
+scope BurdenOfProofCheck:
+  # ТЦК виконав тягар доказування тільки якщо надав ВСЕ
+  definition tcc_met_burden_of_proof =
+    evidence.tcc_provided_personal_file and
+    evidence.tcc_provided_summons_proof and
+    evidence.tcc_provided_vlk_proof and
+    evidence.tcc_provided_presence_proof
+
+  # Якщо хоч щось не надано — презумпція незаконності дій ТЦК (ч.2 ст.77 КАС)
+  definition presumption_of_unlawfulness =
+    not tcc_met_burden_of_proof
+```
+
+## Додаткові наслідки незаконної мобілізації
+
+При скасуванні наказів про мобілізацію суд також зобов'язав ТЦК:
+- Подати до **Пенсійного фонду** відомості про **виключення** з реєстру застрахованих осіб
+  (особа помилково рахувалася «військовослужбовцем» у ПФУ)
+
+```catala
+# Наслідок скасування: виключення з реєстру ПФУ
+declaration structure MobilizationCancellationConsequences:
+  data person_listed_in_pension_fund_as_military content boolean  # чи внесена до ПФУ як військовий
+  data pension_fund_data_must_be_corrected content boolean        # чи потрібне виправлення
+
+# Якщо мобілізація скасована — дані ПФУ мають бути виправлені
+# (суд прямо зобов'язав ТЦК подати відомості про виключення)
+```
