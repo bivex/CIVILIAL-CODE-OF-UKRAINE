@@ -74,3 +74,81 @@ scope CourtOutcomeDetermination:
   definition court_fee_reimbursed =
     court_decision = CancelAndCloseCase
 ```
+
+## ЖИТТЄВИЙ ЦИКЛ СПРАВИ — КОМПОЗИЦІЯ СУТІ ТА ПРОЦЕДУРИ
+
+`CourtOutcomeDetermination` (суть за ст.286 КАС) та `AppealDeadlineRestorationCheck`
+(процедурний доступ до апеляції/касації) моделюють **різні шари** процесу. Щоб отримати
+єдину картину результату справи, введено композитний scope-оркестратор `CaseLifecycleDetermination`.
+
+Він приймає **вихідні результати** обох перевірок (через enumerations) і визначає фінальний
+результат у життєвому циклі справи, не дублюючи їхню внутрішню логіку.
+
+```catala
+# Стадія розгляду справи
+declaration enumeration InstanceStage:
+  -- FirstInstance          # суд першої інстанції (суддя одноосібно)
+  -- AppealInstance         # апеляційний адмінсуд (колегія)
+  -- CassationInstance      # Верховний Суд (касація)
+
+# Фінальний результат у життєвому циклі справи
+declaration enumeration LifecycleDisposition:
+  -- MeritsPending                    # суть ще не вирішена (справа триває)
+  -- MeritsResolvedFavorably          # суть вирішена на користь особи (скасування/закриття)
+  -- MeritsLostOnMerits               # позов відхилено (постанову залишено в силі)
+  -- ProceduralBarrierAppeal          # доступ до апеляції заблоковано строком — боротьба триває
+  -- DeadlineRestoredAppealRemanded   # ВС поновив строк, ухвалу апеляції скасовано (ст.353 ч.1 КАС)
+
+# Композитний вхід: результати обох перевірок + поточна стадія
+declaration structure CaseLifecycleInput:
+  data current_stage content InstanceStage
+  data merits_decision content CourtOutcomeType          # вихід CourtOutcomeDetermination
+  data deadline_must_be_restored content boolean         # вихід AppealDeadlineRestorationCheck
+  data cassation_granted content boolean                 # чи задоволено касацію ВС
+
+declaration scope CaseLifecycleDetermination:
+  input lifecycle content CaseLifecycleInput
+  output final_disposition content LifecycleDisposition
+  output access_to_justice_secured content boolean       # п.8 ч.2 ст.129 Конституції
+  output fee_reimbursed content boolean                  # ст.139 КАС
+
+scope CaseLifecycleDetermination:
+  # 1. Фінальний результат залежить від стадії та результатів обох перевірок
+  definition final_disposition =
+    if lifecycle.current_stage = CassationInstance and lifecycle.cassation_granted then
+      # ВС скасував ухвалу апеляції про відмову поновити строк — справа повертається (ч.1 ст.353 КАС)
+      DeadlineRestoredAppealRemanded
+    else if lifecycle.current_stage = CassationInstance then
+      # Касація триває / відмовлено — доступ до апеляції ще заблоковано строком
+      ProceduralBarrierAppeal
+    else if lifecycle.current_stage = FirstInstance then
+      if lifecycle.merits_decision = DismissLawsuit then
+        MeritsLostOnMerits
+      else
+        MeritsResolvedFavorably
+    else
+      MeritsPending
+
+  # 2. Доступ до правосуддя забезпечено, якщо: або суть вирішена на користь особи,
+  #    або процедурний строк поновлено (доктрина легітимних очікувань спрацювала)
+  definition access_to_justice_secured =
+    (lifecycle.merits_decision <> DismissLawsuit) or
+    lifecycle.deadline_must_be_restored
+
+  # 3. Судовий збір повертається лише при повному задоволенні — скасуванні з закриттям справи.
+  #    При направленні на новий розгляд або процесуальних маневрах — не повертається.
+  definition fee_reimbursed =
+    lifecycle.merits_decision = CancelAndCloseCase
+```
+
+### Приклад: справа №129/2907/24 (ВС, 11.06.2026) через композитний scope
+```
+current_stage           = CassationInstance
+merits_decision         = CancelAndRemandForReview  (суд 1-ї інст. скасував штраф, направив)
+deadline_must_be_restored = true                    (апеляція подана ≤30 днів, легітимні очікування)
+cassation_granted       = true                     (ВС задовольнив касацію)
+─────────────────────────────────────────
+final_disposition       = DeadlineRestoredAppealRemanded   ✅
+access_to_justice_secured = true                                 ✅
+fee_reimbursed          = false                    (справа повертається, не закрита)
+```

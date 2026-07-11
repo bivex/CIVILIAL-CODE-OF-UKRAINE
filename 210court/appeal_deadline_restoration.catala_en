@@ -147,3 +147,13 @@ scope AppealDeadlineRestorationCheck:
 
 4. **Тягар несе суд.** Помилка суду у роз'ясненні строку — це не провина особи.
    Принцип рівності (ст.129 Конституції) забороняє дискримінувати особу через судову помилку.
+
+## 🔗 Зв'язок із композитним scope (життєвий цикл справи)
+
+Виходи цього scope входять до композитного `CaseLifecycleDetermination`
+(див. `court_ruling.catala_en`):
+- `deadline_must_be_restored` → `CaseLifecycleInput.deadline_must_be_restored`
+- `cassation_outcome = CancelAppealRulingAndRemand` → `CaseLifecycleInput.cassation_granted = true`
+
+Це дозволяє моделі повертати єдиний `final_disposition`, що поєднує суттєвий
+результат (ст.286 КАС) та процедурний доступ до правосуддя (ст.295, 353 КАС).
