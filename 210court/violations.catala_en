@@ -119,3 +119,53 @@ scope ElectronicMilitaryDocumentCheck:
   definition no_offense_committed =
     document_is_valid and tcc_invalidity_claim_is_unlawful
 ```
+
+## Темпоральна дія ч.3 ст.210-1 КУпАП — заборона зворотної сили закону (справа 760/33482/24)
+
+Частина 3 ст.210-1 КУпАП була додана Законом № 3696-IX від 09 травня 2024 року та **набрала чинності 19.05.2024**.
+
+**Заборона зворотної дії (ст. 58 Конституції, ст. 8 КУпАП)**: до порушень, вчинених **до 19.05.2024**, застосовується лише ч.1 ст.210-1 КУпАП (мирний час). Застосування ч.3 (особливий період) до порушень, вчинених до набрання чинності — є пряме порушення Конституції.
+
+### Справа-прецедент: 760/33482/24 (09.09.2025, суддя Кицюк В.С.)
+ТЦК звинуватив директора підприємства у неподанні звітності «з кінця 2022 року» та застосував ч.3 ст.210-1 КУпАП. Суд скасував постанову і направив на новий розгляд — оскільки норма набрала чинності лише у травні 2024 року та постанова не визначала конкретний звітний період.
+
+```catala
+# Ключова дата: набрання чинності ч.3 ст.210-1 КУпАП (Закон №3696-IX)
+# Умовна ціла дата: 20240519 = 2024-05-19
+let date_part3_enacted content integer = 20240519
+
+declaration structure Part3ApplicationDetails:
+  data date_violation_committed content integer   # дата вчинення порушення (або початок звітного періоду)
+  data date_resolution_issued content integer     # дата винесення постанови
+  data resolution_specifies_exact_period content boolean  # чи чітко вказано у постанові звітний період
+  data resolution_period_consistent_with_response content boolean  # чи збігається період у постанові та відзиві
+
+declaration scope Part3TemporalApplicabilityCheck:
+  input app content Part3ApplicationDetails
+  output part3_applicable content boolean
+  output retroactive_application content boolean
+  output resolution_period_is_ambiguous content boolean
+  output resolution_should_be_remanded content boolean
+
+scope Part3TemporalApplicabilityCheck:
+  # 1. Ч.3 застосовна лише до порушень, вчинених після 19.05.2024
+  # Ст. 58 Конституції, ст. 8 КУпАП: закон, що встановлює відповідальність, не має зворотної дії
+  definition part3_applicable =
+    app.date_violation_committed >= date_part3_enacted
+
+  # 2. Незаконна зворотна дія: ч.3 застосована до порушень ДО набрання чинності
+  definition retroactive_application =
+    not part3_applicable
+
+  # 3. Постанова не визначає чітко звітний період або суперечить відзиву (ст. 245, 280 КУпАП)
+  definition resolution_period_is_ambiguous =
+    not app.resolution_specifies_exact_period or
+    not app.resolution_period_consistent_with_response
+
+  # 4. Підстава для направлення на новий розгляд (п.2 ч.3 ст.286 КАС):
+  # порушення може існувати, але постанова є передчасною через неповноту розгляду.
+  # Відрізняється від підстав для ЗАКРИТТЯ справи (ст.247 КУпАП) — тут факт порушення визнається,
+  # але постанова процесуально ущербна і підлягає переробці, а не закриттю.
+  definition resolution_should_be_remanded =
+    retroactive_application or resolution_period_is_ambiguous
+```

@@ -29,3 +29,48 @@ scope CourtRulingEvaluation:
     else
       money_of_integer(0)
 ```
+
+## Вибір типу судового рішення за ст. 286 КАС — закрити чи направити на новий розгляд
+
+Суд має **три можливих рішення** за ч.3 ст.286 КАС у справах про адміністративну відповідальність:
+1. **Залишити постанову без змін** — позов без задоволення.
+2. **Скасувати і закрити справу** (п.3) — якщо відсутній склад правопорушення або строки давності сплили (ст.247 КУпАП).
+3. **Скасувати і направити на новий розгляд** (п.2) — якщо порушення *може* існувати, але постанова є передчасною або процесуально неповною.
+
+### Справа-прецедент: 760/33482/24 (09.09.2025, суддя Кицюк В.С.)
+Суд обрав **направлення** (п.2), а не **закриття** (п.3), оскільки особа визнала неподання звітності, проте постанова: (а) застосувала ч.3 до порушень до 19.05.2024; (б) не встановила конкретний звітний період.
+
+```catala
+declaration enumeration CourtOutcomeType:
+  -- DismissLawsuit           # залишити постанову без змін
+  -- CancelAndCloseCase       # скасувати і закрити справу (п.3 ч.3 ст.286 КАС, ст.247 КУпАП)
+  -- CancelAndRemandForReview # скасувати і направити на новий розгляд (п.2 ч.3 ст.286 КАС)
+
+declaration structure CourtOutcomeDetails:
+  data resolution_should_be_canceled content boolean
+  data no_corpus_delicti_or_expired content boolean   # відсутній склад або строки давності сплили
+  data resolution_is_premature content boolean        # порушення може існувати, але постанова неповна
+
+declaration scope CourtOutcomeDetermination:
+  input outcome content CourtOutcomeDetails
+  output court_decision content CourtOutcomeType
+  output court_fee_reimbursed content boolean
+
+scope CourtOutcomeDetermination:
+  definition court_decision =
+    if not outcome.resolution_should_be_canceled then
+      DismissLawsuit
+    else if outcome.no_corpus_delicti_or_expired then
+      # Немає події/складу або строки давності сплили — справу закрити
+      CancelAndCloseCase
+    else if outcome.resolution_is_premature then
+      # Порушення може існувати, але постанова неповна/передчасна — направити на новий розгляд
+      CancelAndRemandForReview
+    else
+      CancelAndCloseCase
+
+  # Судовий збір повертається при закритті справи (повне задоволення)
+  # При направленні на новий розгляд (часткове задоволення) — НЕ повертається
+  definition court_fee_reimbursed =
+    court_decision = CancelAndCloseCase
+```
