@@ -29,6 +29,8 @@ declaration structure TCCAppealDetails:
   data date_admission_submitted content integer                  # дата подання заяви за ст. 279-9 КУпАП
   data summons_sent_to_registered_address content boolean        # чи відправлено повістку за зареєстрованим місцем проживання
   data summons_document_present_in_case content boolean          # чи наявні у матеріалах справи сама повістка та докази її відправлення
+  data date_absent_mark_placed content integer                   # дата проставлення відмітки «відсутній за адресою» на поштовому відправленні
+  data resolution_specifies_missing_data content boolean         # чи зазначено у постанові, які саме дані не було оновлено (ст. 280 КУпАП)
 
 declaration scope TCCAppealEvaluation:
   input appeal content TCCAppealDetails
@@ -38,6 +40,8 @@ declaration scope TCCAppealEvaluation:
   output notification_is_invalid content boolean
   output summons_address_is_wrong content boolean
   output no_corpus_delicti content boolean
+  output absent_mark_placed_after_appearance content boolean
+  output resolution_vague_on_missing_data content boolean
   output resolution_should_be_canceled content boolean
 
 scope TCCAppealEvaluation:
@@ -68,24 +72,35 @@ scope TCCAppealEvaluation:
     appeal.person_disputes_violation and
     is_notified_only_via_returned_mail
 
-  # 4. Перевірка належності сповіщення (повістка відправлена поштою після дати явки)
+  # 4. Перевірка належності сповіщення
+  # 4a. Основне правило: повістка відправлена поштою після дати явки (справа 760/13539/25)
   definition notification_is_invalid =
     appeal.date_summons_sent >= appeal.date_appearance_required
 
-  # 5. Повістку надіслано не за зареєстрованим місцем проживання (справа 760/6910/25)
-  # ч. 2 ст. 22 Закону «Про мобілізаційну підготовку та мобілізацію»:
-  # обов'язок з'явитися виникає лише після отримання повістки за місцем реєстрації.
-  # Надсилання лише за «задекларованою» адресою не є належним врученням виклику.
+  # 4b. Виняток: відмітку "відсутній" проставлено ПІСЛЯ дати явки (справа 760/31848/24)
+  # За пп. 2 п. 41 Постанови КМУ № 560, відмітка "відсутній" є належним повідомленням
+  # лише якщо вона проставлена ДО дати явки. Якщо відмітка поставлена ПІСЛЯ дати явки,
+  exception definition notification_is_invalid = true
+    under condition
+      appeal.date_absent_mark_placed > appeal.date_appearance_required
+    consequence equals true
+
+  # 5. Повістку надіслано не за зареєстрованим місцем проживання (760/6910/25)
   definition summons_address_is_wrong =
     not appeal.summons_sent_to_registered_address
 
-  # 6. Відсутність у матеріалах справи самої повістки та доказів її вручення (ст. 280 КУпАП)
-  # Якщо постанова посилається на повістку/розпорядження/виклик,
-  # але ці документи відсутні у справі — вина особи не доведена, склад правопорушення відсутній.
+  # 6. Відсутність у справі повістки та доказів завчас (ст. 280 КУпАП)
   definition no_corpus_delicti =
     not appeal.summons_document_present_in_case
 
-  # 7. Загальний висновок суду: постанова підлягає скасуванню, якщо є хоча б одне порушення
+  # 7. Постанова не конкретизує, які саме дані не було оновлено (справа 760/31848/24)
+  definition absent_mark_placed_after_appearance =
+    appeal.date_absent_mark_placed > appeal.date_appearance_required
+
+  definition resolution_vague_on_missing_data =
+    not appeal.resolution_specifies_missing_data
+
+  # 8. Загальний висновок: постанова підлягає скасуванню, якщо є хоча б одне порушення
   definition resolution_should_be_canceled =
     statute_of_limitations_expired or
     procedural_rights_violated or
@@ -93,6 +108,8 @@ scope TCCAppealEvaluation:
     notification_is_invalid or
     summons_address_is_wrong or
     no_corpus_delicti or
+    absent_mark_placed_after_appearance or
+    resolution_vague_on_missing_data or
     appeal.has_valid_deferment
 ```
 
@@ -121,3 +138,37 @@ scope ResolutionExistenceCheck:
     info.reserve_plus_shows_violation and info.tcc_denies_existence
 ```
 
+
+## Виняток з відповідальності через електронну взаємодію реєстрів (справа 760/31848/24)
+Відповідно до Закону «Про Єдиний державний реєстр призовників, військовозобов`язаних та резервістів», ст. 210/210-1 КУпАП **не застосовуються**, якщо держатель Реєстру може отримати персональні дані шляхом **електронної інформаційної взаємодії** з іншими реєстрами (Дія, ДРФО, ЄДР тощо).
+
+Постанова, яка не вказує конкретно **які дані** не оновлено і **до яких реєстрів** ТЦК не має доступу, порушує ст. 280 КУпАП і не доводить об`єктивну сторону правопорушення.
+
+```catala
+declaration structure RegistryDataUpdateDetails:
+  data tcc_can_get_data_via_interoperability content boolean      # ТЦК може отримати дані через е-взаємодію
+  data person_updated_data_in_electronic_cabinet content boolean  # особа оновила дані в е-кабінеті / Резерв+
+  data resolution_names_specific_missing_fields content boolean   # постанова вказує конкретні відсутні поля
+  data resolution_names_inaccessible_registries content boolean   # постанова вказує реєстри, до яких ТЦК не має доступу
+
+declaration scope RegistryDataUpdateCheck:
+  input upd content RegistryDataUpdateDetails
+  output liability_excluded_by_interoperability content boolean
+  output resolution_fails_art280 content boolean
+  output no_violation_of_data_update_duty content boolean
+
+scope RegistryDataUpdateCheck:
+  # 1. Відповідальність виключається, якщо ТЦК може отримати дані через е-взаємодію реєстрів
+  definition liability_excluded_by_interoperability =
+    upd.tcc_can_get_data_via_interoperability
+
+  # 2. Постанова порушує ст. 280 КУпАП, якщо не конкретизує бракуючі поля та недоступні реєстри
+  definition resolution_fails_art280 =
+    not upd.resolution_names_specific_missing_fields or
+    not upd.resolution_names_inaccessible_registries
+
+  # 3. Обов'язок оновлення не порушено, якщо особа оновила е-кабінет або ТЦК міг отримати дані сам
+  definition no_violation_of_data_update_duty =
+    upd.person_updated_data_in_electronic_cabinet or
+    liability_excluded_by_interoperability
+```
