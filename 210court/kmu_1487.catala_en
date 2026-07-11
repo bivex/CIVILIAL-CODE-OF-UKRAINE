@@ -1,0 +1,150 @@
+# ПОСТАНОВА КМУ № 1487 від 30.12.2022
+# Порядок організації та ведення військового обліку призовників, військовозобов'язаних та резервістів
+# Додаток 2 — ПРАВИЛА ВІЙСЬКОВОГО ОБЛІКУ
+
+## Ключові принципи (для оскарження дій ТЦК)
+
+### 1. Облік — за зареєстрованим/задекларованим місцем проживання
+П.п. 1 Додатка 2: Призовник/військовозобов'язаний **перебуває на обліку у ТЦК за задекларованим (зареєстрованим) місцем проживання**.
+Отже: ТЦК, який не є ТЦК за місцем реєстрації особи, **не може** вести її справу або накладати на неї стягнення.
+
+### 2. Обов'язок з'явитися — лише за отриманим документом
+П.п. 2 Додатка 2: Призовник зобов'язаний прибути до ТЦК **лише за викликом** (повістка, мобілізаційне розпорядження) **у строки, зазначені у документі**.
+Отже: примусова доставка без виклику — незаконна.
+
+### 3. Зміна місця проживання → 7 днів на перереєстрацію
+П.п. 7 Додатка 2 та п. 23 Порядку: Після прибуття до нового місця проживання громадянин
+**зобов'язаний особисто в семиденний строк** прибути до ТЦК за новою адресою.
+
+### 4. Зміна персональних даних → 7 днів на повідомлення
+П.п. 8 Додатка 2 (ред. Постанови КМУ № 1558 від 31.12.2024):
+У разі зміни персональних даних (пп. 7, 7-1 ч.1 ст.7 ЗУ «Про Єдиний реєстр»)
+громадянин зобов'язаний повідомити протягом **7 днів** через **е-кабінет** або особисто.
+Повідомлення через е-кабінет не може відбуватися частіше одного разу на 7 днів.
+
+### 5. Звіряння даних — не рідше 1 разу на 5 років
+П.п. 10 Додатка 2: Громадянин зобов'язаний **звіряти** свої дані з обліковими даними ТЦК
+**не рідше одного разу на п'ять років**.
+
+### 6. Постановка на облік чужим ТЦК — тільки через е-реєстр автоматично
+П. 14-3 Порядку (доданий Постановою КМУ № 1203 від 25.09.2025):
+Громадяни 25–60 років можуть бути взяті на облік **автоматично** на підставі відомостей
+з реєстрів через систему «Трембіта» — **без виклику до ТЦК**.
+Це означає: примусова доставка до ТЦК для «постановки на облік» суперечить Порядку.
+
+```catala
+# Ключові строки (в днях)
+let days_to_reregister_after_move content integer = 7         # п.п.7 Додатка 2, п.23 Порядку
+let days_to_report_data_change content integer = 7            # п.п.8 Додатка 2
+let years_data_reconciliation_interval content integer = 5    # п.п.10 Додатка 2
+let min_interval_between_ecabinet_reports content integer = 7 # п.п.8 Додатка 2
+
+declaration structure MilitaryRegistrationObligation:
+  # Дані про реєстрацію особи
+  data person_registered_address_tcc_id content string        # код ТЦК за місцем реєстрації
+  data tcc_that_issued_resolution_id content string           # код ТЦК, що видав постанову
+  data person_has_valid_registration content boolean          # є зареєстроване або задеклароване місце
+
+  # Зміна адреси
+  data address_changed content boolean                        # чи змінювалося місце проживання
+  data days_since_address_change content integer              # скільки днів минуло з дня зміни
+  data person_appeared_at_new_tcc content boolean             # чи з'явився у 7-денний строк
+
+  # Зміна персональних даних
+  data personal_data_changed content boolean                  # чи змінювалися персональні дані
+  data days_since_data_change content integer                 # скільки днів минуло з дня зміни
+  data person_notified_via_ecabinet content boolean           # чи повідомив через е-кабінет
+  data person_appeared_personally content boolean             # чи з'явився особисто
+
+  # Звіряння даних
+  data years_since_last_reconciliation content integer        # скільки років від останнього звіряння
+  data reconciliation_done content boolean                    # чи проводилось звіряння
+
+  # Спосіб доставки
+  data arrived_voluntarily content boolean                    # чи прибув самостійно (не примусово)
+  data received_valid_summons content boolean                 # чи отримав законну повістку
+
+declaration scope RegistrationObligationCheck:
+  input reg content MilitaryRegistrationObligation
+  output wrong_tcc_issued_resolution content boolean
+  output address_change_obligation_met content boolean
+  output data_change_obligation_met content boolean
+  output reconciliation_obligation_met content boolean
+  output forced_delivery_without_summons content boolean
+  output person_has_no_violation content boolean
+
+scope RegistrationObligationCheck:
+  # 1. Перевірка юрисдикції ТЦК
+  # П.п.1 Додатка 2: Облік ведеться у ТЦК за зареєстрованим місцем проживання.
+  # ТЦК, що не є ТЦК за місцем реєстрації — не має юрисдикції над цією особою.
+  definition wrong_tcc_issued_resolution =
+    reg.person_registered_address_tcc_id <> reg.tcc_that_issued_resolution_id
+
+  # 2. Перевірка обов'язку при зміні адреси (п.п.7 Додатка 2, п.23 Порядку)
+  # Якщо адреса змінилася — особа мала з'явитися до нового ТЦК у 7-денний строк.
+  definition address_change_obligation_met =
+    if not reg.address_changed then
+      true  # зміни не було — обов'язок не виник
+    else
+      reg.person_appeared_at_new_tcc and
+      reg.days_since_address_change <= days_to_reregister_after_move
+
+  # 3. Перевірка обов'язку при зміні персональних даних (п.п.8 Додатка 2)
+  # Повідомлення через е-кабінет або особиста поява у 7-денний строк.
+  definition data_change_obligation_met =
+    if not reg.personal_data_changed then
+      true  # зміни не було — обов'язок не виник
+    else
+      (reg.person_notified_via_ecabinet or reg.person_appeared_personally) and
+      reg.days_since_data_change <= days_to_report_data_change
+
+  # 4. Перевірка звіряння даних (п.п.10 Додатка 2: не рідше 1 разу на 5 років)
+  definition reconciliation_obligation_met =
+    reg.reconciliation_done and
+    reg.years_since_last_reconciliation <= years_data_reconciliation_interval
+
+  # 5. Примусова доставка без повістки (п.п.2 Додатка 2)
+  # Обов'язок прибути виникає ЛИШЕ після отримання законного документа (повістки/розпорядження).
+  # Доставка без повістки — незаконна, незалежно від того, до якого ТЦК.
+  definition forced_delivery_without_summons =
+    not reg.arrived_voluntarily and not reg.received_valid_summons
+
+  # 6. Загальний висновок: особа не порушила жодного обов'язку
+  definition person_has_no_violation =
+    address_change_obligation_met and
+    data_change_obligation_met and
+    reconciliation_obligation_met and
+    not forced_delivery_without_summons
+```
+
+## Автоматична постановка на облік через реєстри (п. 14-3 Порядку)
+Постанова КМУ № 1203 від 25.09.2025 встановила: громадяни 25–60 років можуть бути
+взяті на облік **автоматично** через систему «Трембіта» без виклику.
+
+> ⚠️ **Правова позиція**: якщо ТЦК може поставити особу на облік автоматично через
+> е-взаємодію реєстрів, примусова доставка до ТЦК для «постановки на облік» не має
+> законних підстав. Це посилює аргумент `RegistryDataUpdateCheck.liability_excluded_by_interoperability`.
+
+```catala
+declaration structure AutoRegistrationDetails:
+  data person_age content integer                             # вік особи
+  data trembit_interoperability_active content boolean        # чи запущена е-взаємодія Трембіта
+  data person_in_registry content boolean                     # чи є особа в Єдиному реєстрі
+
+declaration scope AutoRegistrationApplicabilityCheck:
+  input auto content AutoRegistrationDetails
+  output can_be_registered_automatically content boolean
+  output forced_appearance_unlawful content boolean
+
+scope AutoRegistrationApplicabilityCheck:
+  # П.14-3: громадяни 25-60 років, не на обліку, беруться автоматично через Трембіту
+  definition can_be_registered_automatically =
+    auto.person_age >= 25 and
+    auto.person_age <= 60 and
+    auto.trembit_interoperability_active and
+    not auto.person_in_registry
+
+  # Якщо можлива автоматична постановка — вимога особистої явки є незаконною
+  definition forced_appearance_unlawful =
+    can_be_registered_automatically
+```
