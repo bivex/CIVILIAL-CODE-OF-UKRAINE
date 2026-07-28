@@ -1,4 +1,4 @@
-# ТЕСТОВІ СЦЕНАРІЇ ВАНТАЖЕННЯ ТА ВАЛІДАЦІЇ (ВЕРСІЯ 2.2 — 153 СУДОВІ СПРАВИ 2025–2026 РР.)
+# ТЕСТОВІ СЦЕНАРІЇ ВАНТАЖЕННЯ ТА ВАЛІДАЦІЇ (ВЕРСІЯ 2.3 — МІНІМАЛЬНА ІНФОРМАЦІЯ)
 
 ## Сценарій 1: Фізична відсутність документа при собі + Усна ідентифікація (Справа № 161/23478/24)
 Водія/пішохода зупинили на вулиці. Документа при собі не було, але людина ввічливо назвала свої дійсні анкетні дані. Поліція склала протокол за ст. 185 КУпАП.
@@ -23,57 +23,31 @@ scope TestScenario1_PhysicalMissingDocument:
   definition result_should_close = true
 ```
 
-## Сценарій 2: Відсутність відео з бодікамери / Лише рапорт поліції (Справи № 761/46154/25, № 555/69/26)
-Поліція склала протокол за ст. 185 КУпАП, але не надала суду суцільного відеозапису з бодікамери (лише рапорт).
-**Застосування правильної лінії захисту:** Рапорт без відео є недопустимим доказом.
-**Очікуваний вердикт:** Закрити провадження за п. 1 ч. 1 ст. 247 КУпАП.
+## Сценарій 5: Протокол мінімальної інформації (Minimum Information Strategy)
+Громадянин надав 3 обов'язкові параметри (ПІБ, дата народження, прописка), але відмовився відповідати на запитання «Куди йдете?» та «Де працюєте?» посилаючись на ст. 63 Конституції України.
+**Очікуваний результат:** Обов'язок ідентифікації виконано, ст. 185 КУпАП заблоковано, рівень видачі інформації — суворий мінімум.
 
 ```catala
-declaration scope TestScenario4_NoBodycamEvidenceCorrectDefense:
-  output defense_inputs content CorrectDefenseLineInputs
-  output verdict content string
-  output should_close content boolean
+declaration scope TestScenario5_MinimumInfoStrategy:
+  output mandatory_inputs content MandatoryIdentityParams
+  output voluntary_inputs content VoluntaryNonDisclosedParams
+  output is_duty_fulfilled content boolean
+  output is_art185_blocked content boolean
+  output disclosure_level content string
 
-scope TestScenario4_NoBodycamEvidenceCorrectDefense:
-  definition defense_inputs.officer_identified_himself = true
-  definition defense_inputs.verbal_true_identity_provided = true
-  definition defense_inputs.document_physically_missing_at_scene = false
-  definition defense_inputs.video_recording_by_citizen_present = true
-  definition defense_inputs.bodycam_video_absent_in_court = true
-  definition defense_inputs.police_report_only_evidence = true
-  definition defense_inputs.polite_and_tolerant_communication = true
-  definition defense_inputs.written_objections_in_protocol_present = true
-  definition defense_inputs.attended_court_hearing_with_lawyer = true
+scope TestScenario5_MinimumInfoStrategy:
+  definition mandatory_inputs.provided_full_name = true
+  definition mandatory_inputs.provided_date_of_birth = true
+  definition mandatory_inputs.provided_registered_address = true
+  definition mandatory_inputs.document_shown_on_screen_or_hands = false
 
-  definition verdict = "ЗАКРИТИ ПРОВАДЖЕННЯ (п. 1 ч. 1 ст. 247 КУпАП): Застосовано правильну правову лінію захисту"
-  definition should_close = true
-```
+  definition voluntary_inputs.refused_movement_purpose_questions = true
+  definition voluntary_inputs.refused_employment_and_income_questions = true
+  definition voluntary_inputs.refused_phone_and_email_disclosure = true
+  definition voluntary_inputs.refused_unlawful_pocket_inspection = true
+  definition voluntary_inputs.invoked_constitution_article_63 = true
 
-## Сценарій 3: Безпідставна зупинка ТЗ + Вимога документів (Постанова ВС № 686/11314/18)
-Поліція зупинила ТЗ без будь-яких порушень ПДР чи інших підстав ст. 35 ЗУ «Про Нацполіцію». Водій відмовився пред'явити документи на незаконну зупинку.
-**Очікуваний вердикт суду:** Вимога є незаконною, складу за ст. 185 КУпАП немає.
-
-```catala
-declaration scope TestScenario2_UnlawfulVehicleStop:
-  output vehicle_info content VehicleStopDetails
-  output incident_data content IncidentDetails185
-  output is_stop_lawful content boolean
-  output result_guilty content boolean
-
-scope TestScenario2_UnlawfulVehicleStop:
-  definition vehicle_info.pdr_violation_observed = false
-  definition vehicle_info.vehicle_technical_malfunction = false
-  definition vehicle_info.info_about_offense_or_accident = false
-  definition vehicle_info.vehicle_in_search_database = false
-  definition vehicle_info.need_witness_testimony = false
-  definition vehicle_info.need_driver_assistance = false
-  definition vehicle_info.traffic_restriction_order = false
-  definition vehicle_info.improper_cargo_securing = false
-  definition vehicle_info.improper_siren_or_flasher_use = false
-  definition vehicle_info.foreign_registration_check = false
-  definition vehicle_info.martial_law_checkpoint_or_blockade = false
-
-  definition is_stop_lawful = false
-  definition incident_data.is_police_demand_lawful = is_stop_lawful
-  definition result_guilty = false
+  definition is_duty_fulfilled = true
+  definition is_art185_blocked = true
+  definition disclosure_level = "СУВОРНИЙ МІНІМУМ: Нуль зайвої інформації видано поліції"
 ```

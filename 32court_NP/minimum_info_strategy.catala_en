@@ -1,0 +1,65 @@
+# ФОРМАЛІЗАЦІЯ ПРОТОКОЛУ МІНІМАЛЬНОГО НАДАНИХ ДАНИХ (MINIMUM INFORMATION DISCLOSURE PROTOCOL)
+
+## Законодавча основа мінімізації інформації
+
+1. **Законний обов'язок ідентифікації (ст. 32 ЗУ «Про Національну поліцію»):**
+   Особа зобов'язана надати можливість поліції встановити її особу. У разі фізичної відсутності документа обов'язок вважається виконаним при наданні **3 мінімальних ідентифікаційних параметрів** (Справа № 161/23478/24 від 13.01.2025):
+   * Прізвище, Ім'я, По батькові (ПІБ).
+   * Дата народження.
+   * Адреса реєстрації (прописка).
+
+2. **Конституційне право на відмову від надання інших пояснень (ст. 63 та ст. 19 Конституції України):**
+   Громадянин не зобов'язаний давати пояснення щодо свого особистого життя, мети пересування, місця роботи, контактного номера телефону чи вмісту кишень/сумки без наявності процесуальних підстав (ст. 34 ЗУ «Про Нацполіцію»).
+
+```catala
+# Формалізація протоколу мінімальної інформації та блокування ст. 185 КУпАП
+
+declaration structure MandatoryIdentityParams:
+  data provided_full_name content boolean
+  data provided_date_of_birth content boolean
+  data provided_registered_address content boolean
+  data document_shown_on_screen_or_hands content boolean
+
+declaration structure VoluntaryNonDisclosedParams:
+  data refused_movement_purpose_questions content boolean
+  data refused_employment_and_income_questions content boolean
+  data refused_phone_and_email_disclosure content boolean
+  data refused_unlawful_pocket_inspection content boolean
+  data invoked_constitution_article_63 content boolean
+
+declaration scope MinimumInfoLegalValidation:
+  input mandatory_data content MandatoryIdentityParams
+  input non_disclosed_data content VoluntaryNonDisclosedParams
+  
+  output is_minimum_legal_duty_fulfilled content boolean
+  output is_art185_prosecution_blocked content boolean
+  output info_disclosure_level content string
+  output legal_protection_verdict content string
+
+scope MinimumInfoLegalValidation:
+  # Законний обов'язок ідентифікації виконано, якщо надано 3 параметри АБО показано документ
+  definition is_minimum_legal_duty_fulfilled =
+    mandatory_data.document_shown_on_screen_or_hands or
+    (mandatory_data.provided_full_name and mandatory_data.provided_date_of_birth and mandatory_data.provided_registered_address)
+
+  # Склад за ст. 185 КУпАП БЛОКУЄТЬСЯ, якщо мінімальний обов'язок виконано та застосовано ст. 63 Конституції
+  definition is_art185_prosecution_blocked =
+    is_minimum_legal_duty_fulfilled and
+    non_disclosed_data.invoked_constitution_article_63
+
+  # Оцінка рівня розголошення інформації
+  definition info_disclosure_level =
+    if is_minimum_legal_duty_fulfilled and
+       non_disclosed_data.refused_movement_purpose_questions and
+       non_disclosed_data.refused_employment_and_income_questions then
+      "СУВОРНИЙ МІНІМУМ: Нуль зайвої інформації видано поліції"
+    else
+      "НАДМІРНЕ РОЗГОЛОШЕННЯ: Видано інформацію за межами обов'язкового мінімуму"
+
+  # Практичний вердикт захисту за судової практикою 2025–2026 рр.
+  definition legal_protection_verdict =
+    if is_art185_prosecution_blocked then
+      "ПОВНА ЗАХИЩЕНІСТЬ: Вимогу ст. 32 ЗУ «Про Нацполіцію» виконано. Спроби складення протоколу за ст. 185 КУпАП підлягають закриттю за п. 1 ч. 1 ст. 247 КУпАП (Справа № 161/23478/24)"
+    else
+      "НЕОБХІДНО НАДАТИ МІНІМУМ: Повідомте ПІБ, дату народження та адресу для блокування ст. 185 КУпАП"
+```
