@@ -1,0 +1,72 @@
+# ФОРМАЛІЗАЦІЯ ЗУПИНКИ ПІШОХОДІВ НА ВУЛИЦІ (ПІШИЙ ПАТРУЛЬ / СТАТТЯ 32 ЗУ «ПРО НАЦІОНАЛЬНУ ПОЛІЦІЮ»)
+
+## Зміст перевірки документів пішохода
+
+Коли особа рухається пішки у громадському місці (на вулиці, у метрополітені, на зупинці транспорту), працівники поліції мають право зупинити її та вимагати пред'явлення документів виключно на підставі:
+1. **Частини 1 статті 32 ЗУ «Про Нацполіцію»** — наявність 6 вичерпних підстав (схожість із розшукуваним, підозра у правопорушенні, місце ДТП/злочину, спецоб'єкт, заборонені речі).
+2. **Частини 2 статті 32 ЗУ «Про Нацполіцію»** — під час дії воєнного стану у чоловіків від 18 до 60 років щодо військово-облікового документа разом з документом, що посвідчує особу.
+
+## Практичні правила та прецеденти для пішоходів (2025–2026 роки):
+
+1. **Фізична відсутність документа у пішохода (Справа № 161/23478/24 від 13.01.2025):**
+   * Якщо пішохід не має при собі паперового чи електронного документа, але **усно повідомляє свої дійсні анкетні дані** (ПІБ, дата народження), його особа може бути встановлена через ІКС поліції. У такому випадку відсутність документа не є злісною непокорою (ст. 185 КУпАП).
+
+2. **Показ документів зі своїх рук або на екрані смартфона («Дія» / «Резерв+»):**
+   * Закон вимагає пред'явити документ у спосіб, що дозволяє прочитати та зафіксувати дані. Вимога поліцейського віддати смартфон або паперовий паспорт у фізичні руки поліцейському не передбачена ч. 2 ст. 32.
+
+```catala
+# Формалізація юридичних умов перевірки та захисту пішохода
+
+declaration structure PedestrianStopInputs:
+  data is_walking_on_foot content boolean
+  data is_public_place_or_metro content boolean
+  data police_officer_identified_himself content boolean
+  data police_explained_art32_ground content boolean
+  
+  # Документи пішохода
+  data has_physical_document content boolean
+  data has_electronic_document_app content boolean
+  data document_physically_missing content boolean
+  data verbal_true_identity_provided content boolean
+  
+  # Поведінка пішохода
+  data showed_document_from_hands_or_screen content boolean
+  data acted_aggressively_or_defiant content boolean
+  data refused_verbal_identification content boolean
+
+declaration scope PedestrianStopLegalityCheck:
+  input pedestrian content PedestrianStopInputs
+  output is_demand_procedurally_valid content boolean
+  output is_pedestrian_in_compliance content boolean
+  output is_art185_prosecution_lawful content boolean
+  output recommended_court_verdict content string
+
+scope PedestrianStopLegalityCheck:
+  # Процесуальна законність вимоги поліцейського до пішохода
+  definition is_demand_procedurally_valid =
+    pedestrian.police_officer_identified_himself and
+    pedestrian.police_explained_art32_ground
+
+  # Виконання вимоги пішоходом (показав з рук/екрану або назвав дійсні анкетні дані)
+  definition is_pedestrian_in_compliance =
+    pedestrian.showed_document_from_hands_or_screen or
+    (pedestrian.document_physically_missing and pedestrian.verbal_true_identity_provided)
+
+  # Притягнення за ст. 185 КУпАП є ЗАКОННИМ лише у разі демонстративної агресії та відмови назвати дані
+  definition is_art185_prosecution_lawful =
+    is_demand_procedurally_valid and
+    pedestrian.acted_aggressively_or_defiant and
+    not pedestrian.showed_document_from_hands_or_screen and
+    not pedestrian.verbal_true_identity_provided
+
+  # Вердикт суду за прецедентом Справи № 161/23478/24
+  definition recommended_court_verdict =
+    if is_art185_prosecution_lawful then
+      "ВИЗНАТИ ВИННИМ: Доведено агресивну відмову від перевірки та ідентифікації"
+    else if pedestrian.document_physically_missing and pedestrian.verbal_true_identity_provided then
+      "ЗАКРИТИ ПРОВАДЖЕННЯ (п. 1 ч. 1 ст. 247 КУпАП): Фізична відсутність документа за наявності усного повідомлення даних не утворює ст. 185 КУпАП (Справа № 161/23478/24)"
+    else if pedestrian.showed_document_from_hands_or_screen then
+      "ЗАКРИТИ ПРОВАДЖЕННЯ: Вимогу виконано у законний спосіб"
+    else
+      "ЗАКРИТИ ПРОВАДЖЕННЯ / ПОВЕРНУТИ ПОЛІЦІЇ: Відсутність належних доказів вини"
+```
