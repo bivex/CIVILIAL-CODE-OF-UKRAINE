@@ -1,0 +1,76 @@
+# ГЛАВА 15 КУпАП — АДМІНІСТРАТИВНІ ПРАВОПОРУШЕННЯ, ЩО ПОСЯГАЮТЬ НА ВСТАНОВЛЕНИЙ ПОРЯДОК УПРАВЛІННЯ
+
+## Повний текст статей 185 – 185-15 КУпАП
+
+### Стаття 185. Злісна непокора законному розпорядженню або вимозі поліцейського, члена громадського формування з охорони громадського порядку і державного кордону, військовослужбовця
+Злісна непокора законному розпорядженню або вимозі поліцейського при виконанні ним службових обов'язків, а також вчинення таких же дій щодо члена громадського формування з охорони громадського порядку і державного кордону або військовослужбовця у зв'язку з їх участю в охороні громадського порядку —
+тягне за собою накладення штрафу від **8 до 15 нмдг** (136–255 грн) або громадські роботи на строк від **40 до 60 годин**, або виправні роботи на строк від **1 до 2 місяців** з відрахуванням 20 % заробітку, або адміністративний арешт на строк **до 15 діб**.
+
+### Стаття 185-3. Прояв неповаги до суду або Конституційного Суду України
+1. Неповага до суду (злісне ухилення від явки в суд свідка, потерпілого, позивача, відповідача, непідкорення розпорядженню головуючого):
+   - штраф від **50 до 150 нмдг**.
+2. Повторне діяння протягом року:
+   - штраф від **150 до 200 нмдг** або виправні роботи на 1–2 місяці з відрахуванням 20% заробітку, або адмінарешт на строк **до 15 діб**.
+
+### Стаття 185-7. Публічні заклики до невиконання вимог поліцейського чи посадової особи ВСП у ЗСУ
+Публічні заклики в будь-якій формі до невиконання розпоряджень або вимог поліцейського чи посадової особи Військової служби правопорядку —
+тягнуть за собою накладення штрафу від **10 до 20 нмдг** або виправні роботи від 1 до 2 місяців з відрахуванням 20% заробітку.
+
+### Стаття 185-10. Злісна непокора законному розпорядженню чи вимозі військовослужбовця або працівника ДПСУ
+1. Злісна непокора вимозі прикордонника чи військовослужбовця під час охорони кордону чи прикордонного контролю:
+   - штраф від **50 до 100 нмдг** або виправні роботи на 1–2 місяці з відрахуванням 20% заробітку, або адмінарешт **до 15 діб**.
+2. Повторно протягом року або групою осіб:
+   - штраф від **100 до 300 нмдг** або адмінарешт від **10 до 15 діб**.
+
+```catala
+# Формалізація штрафів та санкцій за статтями 185 - 185-15 КУпАП
+
+declaration structure DisobedienceArticleDetails:
+  data target_article content string # "185", "185-1", "185-3", "185-7", "185-10", "185-13", "185-15"
+  data is_repeat_offense content boolean
+  data is_group_offense content boolean
+  data is_official_person content boolean
+  data nmdg_value content money
+
+declaration scope Chapter15PenaltiesCalculation:
+  input input_data content DisobedienceArticleDetails
+  output min_fine_nmdg content integer
+  output max_fine_nmdg content integer
+  output min_fine_money content money
+  output max_fine_money content money
+  output max_admin_arrest_days content integer
+
+scope Chapter15PenaltiesCalculation:
+  let nmdg = input_data.nmdg_value
+
+  # Калькуляція штрафів у нмдг залежно від статті
+  definition min_fine_nmdg =
+    if input_data.target_article = "185" then 8
+    else if input_data.target_article = "185-1" then (if input_data.is_repeat_offense then 20 else 10)
+    else if input_data.target_article = "185-3" then (if input_data.is_repeat_offense then 150 else 50)
+    else if input_data.target_article = "185-7" then 10
+    else if input_data.target_article = "185-10" then (if input_data.is_repeat_offense or input_data.is_group_offense then 100 else 50)
+    else if input_data.target_article = "185-13" then (if input_data.is_repeat_offense then 400 else 250)
+    else if input_data.target_article = "185-15" then (if input_data.is_official_person then 100 else 50)
+    else 0
+
+  definition max_fine_nmdg =
+    if input_data.target_article = "185" then 15
+    else if input_data.target_article = "185-1" then (if input_data.is_repeat_offense then 100 else 25)
+    else if input_data.target_article = "185-3" then (if input_data.is_repeat_offense then 250 else 150)
+    else if input_data.target_article = "185-7" then 20
+    else if input_data.target_article = "185-10" then (if input_data.is_repeat_offense or input_data.is_group_offense then 300 else 100)
+    else if input_data.target_article = "185-13" then (if input_data.is_repeat_offense then 600 else 400)
+    else if input_data.target_article = "185-15" then (if input_data.is_official_person then 150 else 100)
+    else 0
+
+  definition min_fine_money = nmdg * min_fine_nmdg
+  definition max_fine_money = nmdg * max_fine_nmdg
+
+  definition max_admin_arrest_days =
+    if input_data.target_article = "185" then 15
+    else if input_data.target_article = "185-1" and input_data.is_repeat_offense then 15
+    else if input_data.target_article = "185-3" and input_data.is_repeat_offense then 15
+    else if input_data.target_article = "185-10" then (if input_data.is_repeat_offense or input_data.is_group_offense then 15 else 15)
+    else 0
+```
