@@ -1,0 +1,14 @@
+# СТАТТЯ 32 ЗУ «ПРО НАЦІОНАЛЬНУ ПОЛІЦІЮ» ТА СУДОВА ПРАКТИКА 2025–2026 РОКІВ (ПОВНИЙ КАТАЛА-ПРОЄКТ)
+
+Цей проєкт формалізує на мові Catala норми статей 32, 34, 35 Закону України «Про Національну поліцію», статті 185 КУпАП («злісна непокора»), Постанови КМУ № 560, а також судову практику та прецеденти 2025–2026 років щодо перевірки документів, зупинення громадян та стратегії/тактики захисту в суді.
+
+> Include: art32_police_check.catala_en
+> Include: art34_surface_check.catala_en
+> Include: art35_vehicle_stop.catala_en
+> Include: kmu_560_tcc_interaction.catala_en
+> Include: art185_disobedience.catala_en
+> Include: court_tactics_and_precedents.catala_en
+> Include: test_scenarios.catala_en
+
+---
+*Формалізація здійснена для системи автоматизованого аналізу юридичних норм і умов судової практики (Catala Language Formalization v2.0).*

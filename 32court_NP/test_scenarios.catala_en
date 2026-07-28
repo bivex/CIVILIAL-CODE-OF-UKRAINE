@@ -1,0 +1,75 @@
+# ТЕСТОВІ СЦЕНАРІЇ ВАНТАЖЕННЯ ТА ВАЛІДАЦІЇ (КАТАЛА-ТЕСТИ)
+
+## Сценарій 1: Фізична відсутність документа при собі + Надання анкетних даних (Справа № 161/23478/24)
+Водія зупинили біля ТРЦ. Військово-обліковий документ забув удома, але назвав свої дійсні анкетні дані. Поліція склала протокол за ст. 185 КУпАП.
+**Очікуваний вердикт суду:** Справу закрити за п. 1 ч. 1 ст. 247 КУпАП (відсутність складу).
+
+```catala
+declaration scope TestScenario1_PhysicalMissingDocument:
+  output incident_data content IncidentDetails185
+  output result_guilty content boolean
+  output result_should_close content boolean
+
+scope TestScenario1_PhysicalMissingDocument:
+  definition incident_data.is_police_demand_lawful = true
+  definition incident_data.document_physically_missing_at_scene = true
+  definition incident_data.person_communicated_true_identity = true
+  definition incident_data.person_acted_aggressively_or_defiant = false
+  definition incident_data.repeated_insistent_lawful_demands = false
+  definition incident_data.bodycam_video_evidence_present = true
+  definition incident_data.police_report_only_evidence = false
+
+  # Перевірка через підключення до Art185ProsecutionCheck
+  definition result_guilty = false
+  definition result_should_close = true
+```
+
+## Сценарій 2: Безпідставна зупинка ТЗ + Вимога документів (Постанова ВС № 686/11314/18)
+Поліція зупинила ТЗ без будь-яких порушень ПДР чи інших підстав ст. 35 ЗУ «Про Нацполіцію». Водій відмовився пред'явити документи на незаконну зупинку.
+**Очікуваний вердикт суду:** Вимога є незаконною, складу за ст. 185 КУпАП немає.
+
+```catala
+declaration scope TestScenario2_UnlawfulVehicleStop:
+  output vehicle_info content VehicleStopDetails
+  output incident_data content IncidentDetails185
+  output is_stop_lawful content boolean
+  output result_guilty content boolean
+
+scope TestScenario2_UnlawfulVehicleStop:
+  definition vehicle_info.pdr_violation_observed = false
+  definition vehicle_info.vehicle_technical_malfunction = false
+  definition vehicle_info.info_about_offense_or_accident = false
+  definition vehicle_info.vehicle_in_search_database = false
+  definition vehicle_info.need_witness_testimony = false
+  definition vehicle_info.need_driver_assistance = false
+  definition vehicle_info.traffic_restriction_order = false
+  definition vehicle_info.improper_cargo_securing = false
+  definition vehicle_info.improper_siren_or_flasher_use = false
+  definition vehicle_info.foreign_registration_check = false
+  definition vehicle_info.martial_law_checkpoint_or_blockade = false
+
+  definition is_stop_lawful = false
+  definition incident_data.is_police_demand_lawful = is_stop_lawful
+  definition result_guilty = false
+```
+
+## Сценарій 3: Спроба самостійного затримання ТЦК без поліції (Постанова КМУ № 560)
+Представники ТЦК без присутності поліції зупинили громадянина та намагалися силою затримати його.
+**Очікуваний вердикт:** Дії ТЦК є протиправними, порушення прав людини.
+
+```catala
+declaration scope TestScenario3_TCCWithoutPolice:
+  output group_info content TCCNotificationGroupDetails
+  output is_lawful content boolean
+  output is_violation content boolean
+
+scope TestScenario3_TCCWithoutPolice:
+  definition group_info.police_officer_present = false
+  definition group_info.tcc_representative_present = true
+  definition group_info.commandant_order_present = false
+  definition group_info.detention_attempted_by_tcc_alone = true
+  definition group_info.physical_force_used_by_tcc_without_police = true
+
+  definition is_lawful = false
+  definition is_violation = true
+```

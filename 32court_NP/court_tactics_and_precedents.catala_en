@@ -1,0 +1,55 @@
+# СТРАТЕГІЯ ТА ТАКТИКА ВЗАЄМОДІЇ З ПОЛІЦІЄЮ ТА СУДОВОГО ЗАХИСТУ
+
+## Алгоритм дій громадянина під час перевірки документів (ст. 32 ЗУ «Про Нацполіцію»)
+
+1. **Етап 1: Встановлення особи поліцейського**
+   * Вимоги ст. 18 ЗУ «Про Національну поліцію»: Поліцейський зобов'язаний назвати посаду, звання, прізвище та пред'явити службове посвідчення у розгорнутому вигляді.
+2. **Етап 2: З'ясування підстави перевірки**
+   * За запитанням: «На підставі якого пункту ч. 1 чи ч. 2 ст. 32 ЗУ «Про Нацполіцію» здійснюється перевірка?»
+3. **Етап 3: Спосіб пред'явлення документів**
+   * Пред'явлення у спосіб, що дозволяє прочитати та зафіксувати дані (зі своїх рук або через екрани смартфонів «Дія» / «Резерв+»). Фізична передача в руки закон не вимагається.
+4. **Етап 4: У разі відсутності документа при собі**
+   * Назвати дійсні анкетні дані для перевірки через електронні системи поліції (унеможливлює ст. 185 КУпАП за прецедентом справи № 161/23478/24).
+5. **Етап 5: Захист у судовому засіданні**
+   * За ст. 268 КУпАП обов'язкова участь у засіданні (уникання ухвал про примусовий привід), витребування відеозапису бодікамери та подання клопотання про закриття справи за п. 1 ч. 1 ст. 247 КУпАП.
+
+```catala
+# Формалізація оцінки правового захисту та безпеки взаємодії
+
+declaration structure CitizenInteractionInputs:
+  data officer_showed_badge_and_named_name content boolean
+  data video_recording_enabled content boolean
+  data document_shown_from_hands_or_app content boolean
+  data verbal_true_identity_provided content boolean
+  data no_physical_resistance_or_insults content boolean
+  data protocol_contains_written_objections content boolean
+  data attended_court_hearing_or_represented content boolean
+
+declaration scope CitizenLegalSafetyAssessment:
+  input interaction content CitizenInteractionInputs
+  output protection_level content string
+  output risk_of_art185_conviction content boolean
+  output risk_of_forced_court_bring content boolean
+
+scope CitizenLegalSafetyAssessment:
+  # Рівень захищеності є високим, якщо дотримано алгоритм спокійної фіксації та надання даних
+  definition protection_level =
+    if interaction.video_recording_enabled and
+       interaction.document_shown_from_hands_or_app and
+       interaction.no_physical_resistance_or_insults and
+       interaction.protocol_contains_written_objections then
+      "ВИСОКИЙ: Повна процесуальна захищеність у суді"
+    else if interaction.verbal_true_identity_provided and interaction.no_physical_resistance_or_insults then
+      "СЕРЕДНІЙ: Наявні підстави для закриття справи за ст. 185 КУпАП (Справа № 161/23478/24)"
+    else
+      "НИЗЬКИЙ: Наявний ризик притягнення до відповідальності"
+
+  # Ризик штрафу за ст. 185 КУпАП близький до нуля при дотриманні толерантності та наданні даних
+  definition risk_of_art185_conviction =
+    not interaction.no_physical_resistance_or_insults or
+    (not interaction.document_shown_from_hands_or_app and not interaction.verbal_true_identity_provided)
+
+  # Ризик примусового приводу виникає виключно при ігноруванні викликів суду (ч. 2 ст. 268 КУпАП)
+  definition risk_of_forced_court_bring =
+    not interaction.attended_court_hearing_or_represented
+```

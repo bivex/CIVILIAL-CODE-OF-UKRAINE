@@ -1,0 +1,36 @@
+# ПОСТАНОВА КАБІНЕТУ МІНІСТРІВ УКРАЇНИ № 560 — ВЗАЄМОДІЯ ТЦК ТА ПОЛІЦІЇ
+
+## Повноваження та межі повноважень уповноважених осіб
+1. **Перевірка військово-облікових документів (ст. 22 ЗУ «Про мобілізацію», Постанова № 560):**
+   * Вчиняється уповноваженими представниками ТЦК та СП або поліцейськими.
+2. **Адміністративне затримання та примусове доставлення (ст. 259, 262 КУпАП):**
+   * Право на адміністративне затримання та затримання особи, яка вчинила адміністративне правопорушення за ст. 210, 210-1 КУпАП, належить **ВИКЛЮЧНО Національній поліції України**.
+   * Представники ТЦК та СП **НЕ мають права** самостійно здійснювати адміністративне затримання, примусово утримувати осіб або силою переміщувати їх у транспортні засоби.
+
+```catala
+declaration structure TCCNotificationGroupDetails:
+  data police_officer_present content boolean
+  data tcc_representative_present content boolean
+  data commandant_order_present content boolean
+  data detention_attempted_by_tcc_alone content boolean
+  data physical_force_used_by_tcc_without_police content boolean
+
+declaration scope JointNotificationGroupCheck:
+  input group_info content TCCNotificationGroupDetails
+  output is_group_empowered_to_check_docs content boolean
+  output is_tcc_detention_action_lawful content boolean
+  output is_human_rights_violation_present content boolean
+
+scope JointNotificationGroupCheck:
+  definition is_group_empowered_to_check_docs =
+    group_info.police_officer_present or
+    (group_info.tcc_representative_present and group_info.commandant_order_present)
+
+  definition is_tcc_detention_action_lawful =
+    not group_info.detention_attempted_by_tcc_alone and
+    not group_info.physical_force_used_by_tcc_without_police
+
+  definition is_human_rights_violation_present =
+    group_info.detention_attempted_by_tcc_alone or
+    group_info.physical_force_used_by_tcc_without_police
+```

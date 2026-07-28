@@ -1,0 +1,80 @@
+# СТАТТЯ 32 ЗАКОНУ УКРАЇНИ «ПРО НАЦІОНАЛЬНУ ПОЛІЦІЮ» — ПЕРЕВІРКА ДОКУМЕНТІВ
+
+## Нормативно-правова основа
+
+### Частина 1 статті 32 Закону України «Про Національну поліцію»:
+Поліцейський має право вимагати в особи пред’явлення нею документів, що посвідчують особу, та/або документів, що підтверджують відповідне право особи, у таких випадках:
+1. Якщо особа володіє зовнішніми ознаками, схожими на зовнішні ознаки особи, яка перебуває в розшуку, або безвісно зниклої особи.
+2. Якщо існує достатньо підстав вважати, що особа вчинила або має намір вчинити правопорушення.
+3. Якщо особа перебуває на території чи об’єкті із спеціальним режимом або в місці здійснення спеціального поліцейського контролю.
+4. Якщо в особи є зброя, боєприпаси, наркотичні засоби та інші речі, обіг яких обмежений або заборонений, або для зберігання, використання чи перевезення яких потрібен дозвіл, якщо встановити такі права іншим чином неможливо.
+5. Якщо особа перебуває в місці вчинення правопорушення або дорожньо-транспортної пригоди, іншої надзвичайної події.
+6. Якщо зовнішні ознаки особи чи транспортного засобу або дії особи дають достатні підстави вважати, що особа причетна до вчинення правопорушення, транспортний засіб може бути знаряддям чи об’єктом вчинення правопорушення.
+
+### Частина 2 статті 32 (Введена під час воєнного стану / мобілізації):
+У період дії воєнного стану та/або під час мобілізації (крім цільової) поліцейський має право вимагати в особи чоловічої статі віком від 18 до 60 років пред’явлення нею військово-облікового документа разом з документом, що посвідчує особу, у спосіб, який дає можливість поліцейському прочитати та зафіксувати дані, що містяться в документах.
+
+```catala
+# Формалізація законності вимоги перевірки документів за ст. 32 ЗУ «Про Нацполіцію»
+
+declaration structure PoliceCheckGrounds:
+  # Вичерпні підстави ч. 1 ст. 32
+  data resembles_wanted_person content boolean
+  data suspected_of_offense content boolean
+  data is_on_restricted_facility content boolean
+  data carries_restricted_items content boolean
+  data is_at_crime_or_accident_scene content boolean
+  data connected_to_offense_by_signs content boolean
+  
+  # Особлива підстава ч. 2 ст. 32
+  data is_martial_law_or_mobilization content boolean
+  data is_male_aged_18_to_60 content boolean
+  
+  # Обов'язки поліцейського за ст. 18 ЗУ «Про Нацполіцію»
+  data officer_identified_himself content boolean
+  data officer_showed_badge content boolean
+  data officer_explained_reason content boolean
+
+declaration structure DocumentPresentationDetails:
+  data document_presented content boolean
+  data presented_via_diia_or_reserve_plus content boolean
+  data presented_paper_in_person_hands content boolean
+  data refused_to_transfer_physically_to_officer content boolean
+
+declaration scope PoliceDocumentCheckLogic:
+  input grounds content PoliceCheckGrounds
+  input presentation content DocumentPresentationDetails
+  
+  output has_lawful_ground_part1 content boolean
+  output has_lawful_ground_part2 content boolean
+  output is_police_demand_lawful content boolean
+  output is_presentation_method_valid content boolean
+  output is_citizen_in_compliance content boolean
+
+scope PoliceDocumentCheckLogic:
+  definition has_lawful_ground_part1 =
+    grounds.resembles_wanted_person or
+    grounds.suspected_of_offense or
+    grounds.is_on_restricted_facility or
+    grounds.carries_restricted_items or
+    grounds.is_at_crime_or_accident_scene or
+    grounds.connected_to_offense_by_signs
+
+  definition has_lawful_ground_part2 =
+    grounds.is_martial_law_or_mobilization and
+    grounds.is_male_aged_18_to_60
+
+  # Вимога є законною лише за наявності підстав ч.1 або ч.2 та виконання процедури поліцейським
+  definition is_police_demand_lawful =
+    (has_lawful_ground_part1 or has_lawful_ground_part2) and
+    grounds.officer_identified_himself and
+    grounds.officer_showed_badge
+
+  # Спосіб пред’явлення є законним, якщо поліцейський може прочитати/зафіксувати (фізична передача в руки НЕ вимагається)
+  definition is_presentation_method_valid =
+    presentation.document_presented and
+    (presentation.presented_via_diia_or_reserve_plus or presentation.presented_paper_in_person_hands)
+
+  definition is_citizen_in_compliance =
+    is_police_demand_lawful and is_presentation_method_valid
+```

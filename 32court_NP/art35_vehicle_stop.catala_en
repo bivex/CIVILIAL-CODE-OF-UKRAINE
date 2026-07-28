@@ -1,0 +1,50 @@
+# СТАТТЯ 35 ЗАКОНУ УКРАЇНИ «ПРО НАЦІОНАЛЬНУ ПОЛІЦІЮ» — ЗУПИНЕННЯ ТРАНСПОРТНОГО ЗАСОБУ
+
+## Вичерпний перелік підстав для зупинення ТЗ (ч. 1 ст. 35):
+1. Порушення правил дорожнього руху (ПДР).
+2. Очевидні ознаки несправності ТЗ.
+3. Інформація про причетність водія/пасажирів до вчинення ДТП чи правопорушення.
+4. ТЗ перебуває в розшуку.
+5. Необхідність опитування водія чи пасажирів як свідків ДТП чи правопорушення.
+6. Необхідність залучення водія до надання допомоги іншим учасникам руху або поліцейським.
+7. Рішення уповноваженого органу про обмеження чи заборону руху.
+8. Закріплення вантажу з порушенням вимог.
+9. Порушення порядку використання спеціальних світлових або звукових сигналів.
+10. Зупинення ТЗ з іноземною реєстрацією для перевірки законності ввезення.
+11. Введення воєнного або надзвичайного стану, розшук або блокування руху.
+
+## Залежність законності вимоги документів від законності зупинення ТЗ
+Згідно зі сталою судовою практикою (зокрема Постанови КАС ВС у справах № 686/11314/18, № 161/2252/25): якщо зупинення ТЗ було здійснено **без законних підстав**, передбачених ст. 35 ЗУ «Про Нацполіцію», подальша вимога поліцейського пред'явити посвідчення водія чи військово-обліковий документ є **НЕЗАКОННОЮ** і відмова її виконувати не створює складу правопорушення.
+
+```catala
+declaration structure VehicleStopDetails:
+  data pdr_violation_observed content boolean
+  data vehicle_technical_malfunction content boolean
+  data info_about_offense_or_accident content boolean
+  data vehicle_in_search_database content boolean
+  data need_witness_testimony content boolean
+  data need_driver_assistance content boolean
+  data traffic_restriction_order content boolean
+  data improper_cargo_securing content boolean
+  data improper_siren_or_flasher_use content boolean
+  data foreign_registration_check content boolean
+  data martial_law_checkpoint_or_blockade content boolean
+
+declaration scope VehicleStopLegalityCheck:
+  input stop_info content VehicleStopDetails
+  output is_vehicle_stop_lawful content boolean
+
+scope VehicleStopLegalityCheck:
+  definition is_vehicle_stop_lawful =
+    stop_info.pdr_violation_observed or
+    stop_info.vehicle_technical_malfunction or
+    stop_info.info_about_offense_or_accident or
+    stop_info.vehicle_in_search_database or
+    stop_info.need_witness_testimony or
+    stop_info.need_driver_assistance or
+    stop_info.traffic_restriction_order or
+    stop_info.improper_cargo_securing or
+    stop_info.improper_siren_or_flasher_use or
+    stop_info.foreign_registration_check or
+    stop_info.martial_law_checkpoint_or_blockade
+```

@@ -1,0 +1,92 @@
+# СТАТТЯ 185 КУпАП — ЗЛІСНА НЕПОКОРА ЗАКОННОМУ РОЗПОРЯДЖЕННЮ АБО ВИМОЗІ ПОЛІЦЕЙСЬКОГО
+
+## Нормативна диспозиція статті 185 КУпАП
+Злісна непокора законному розпорядженню або вимозі поліцейського при виконанні ним службових обов'язків —
+тягне за собою накладення штрафу від 8 до 15 неоподатковуваних мінімумів доходів громадян (136–255 грн), або громадські роботи на строк від 40 до 60 годин, або виправні роботи на строк від 1 до 2 місяців з відрахуванням 20 % заробітку, або адміністративний арешт на строк до 15 діб.
+
+## Судова практика та прецеденти (2025–2026 роки)
+
+### 1. Прецедент 1: Фізична відсутність документа НЕ є злісною непокорою
+* **Справа № 161/23478/24 (Постанова від 13.01.2025):** 
+  Відсутність військово-облікового документа при собі через його фізичне непідтвердження (а не через демонстративну відмову) за умови названня дійсних анкетних даних та толерантної поведінки **НЕ створює складу правопорушення за ст. 185 КУпАП**. Провадження підлягає закриттю за п. 1 ч. 1 ст. 247 КУпАП.
+
+### 2. Прецедент 2: Відсутність об'єктивних доказів (відео з бодікамер)
+* **Справа № 761/46154/25 (Постанова від 05.12.2025):**
+  Рапорт поліцейського не є самостійним доказом вини. Без наявності відеозапису з бодікамери, що зафіксував саме *злісний* або *зухвалий* характер дій громадянина, склад за ст. 185 КУпАП є недоведеним.
+
+### 3. Прецедент 3: Незаконна вимога не створює обов'язку її виконання
+* **Постанови ВС та місцевих судів (Справи 757/15617/26-п, 161/2252/25):**
+  Обов'язок виконання вимоги поліцейського виникає **лише за умови її законності**. Незаконна вимога (без підстав за ст. 32 / ст. 35 ЗУ «Про Нацполіцію») не утворює складу ст. 185 КУпАП при відмові її виконувати.
+
+```catala
+# Формалізація оцінки наявності складу правопорушення за ст. 185 КУпАП
+
+declaration structure IncidentDetails185:
+  data is_police_demand_lawful content boolean
+  data document_physically_missing_at_scene content boolean
+  data person_communicated_true_identity content boolean
+  data person_acted_aggressively_or_defiant content boolean
+  data repeated_insistent_lawful_demands content boolean
+  data bodycam_video_evidence_present content boolean
+  data police_report_only_evidence content boolean
+
+declaration scope Art185ProsecutionCheck:
+  input incident content IncidentDetails185
+  output is_guilty_art185 content boolean
+  output should_close_case_part247 content boolean
+  output reason_for_closure content string
+
+scope Art185ProsecutionCheck:
+  # Загальне правило: Склад ст. 185 є лише при ЗАКОННІЙ вимозі, ЗЛІСНІЙ/ЗУХВАЛІЙ відмові та підтвердженні доказами
+  definition is_guilty_art185 =
+    incident.is_police_demand_lawful and
+    incident.person_acted_aggressively_or_defiant and
+    incident.repeated_insistent_lawful_demands and
+    incident.bodycam_video_evidence_present and
+    not incident.document_physically_missing_at_scene
+
+  # Захисні винятки на основі судової практики 2025–2026 рр.
+  
+  # Виняток 1: Фізична відсутність документа + надання даних = Відсутність складу (Справа 161/23478/24)
+  exception definition should_close_case_part247 = true
+    under condition
+      incident.document_physically_missing_at_scene and
+      incident.person_communicated_true_identity and
+      not incident.person_acted_aggressively_or_defiant
+    consequence equals true
+
+  exception definition reason_for_closure = "Відсутність військово-облікового документа при собі та надання анкетних даних не утворює злісної непокори за ст. 185 КУпАП (Справа № 161/23478/24)"
+    under condition
+      incident.document_physically_missing_at_scene and
+      incident.person_communicated_true_identity and
+      not incident.person_acted_aggressively_or_defiant
+    consequence equals "Відсутність військово-облікового документа при собі та надання анкетних даних не утворює злісної непокори за ст. 185 КУпАП (Справа № 161/23478/24)"
+
+  # Виняток 2: Незаконна вимога поліцейського = Відсутність складу
+  exception definition should_close_case_part247 = true
+    under condition
+      not incident.is_police_demand_lawful
+    consequence equals true
+
+  exception definition reason_for_closure = "Незаконна вимога поліцейського не створює юридичного обов'язку її виконання"
+    under condition
+      not incident.is_police_demand_lawful
+    consequence equals "Незаконна вимога поліцейського не створює юридичного обов'язку її виконання"
+
+  # Виняток 3: Відсутність відеодоказів (лише рапорт) = Відсутність складу (Справа 761/46154/25)
+  exception definition should_close_case_part247 = true
+    under condition
+      incident.police_report_only_evidence and
+      not incident.bodycam_video_evidence_present
+    consequence equals true
+
+  exception definition reason_for_closure = "Рапорт поліцейського без відеозапису бодікамери є неналежним доказом вини (Справа № 761/46154/25)"
+    under condition
+      incident.police_report_only_evidence and
+      not incident.bodycam_video_evidence_present
+    consequence equals "Рапорт поліцейського без відеозапису бодікамери є неналежним доказом вини (Справа № 761/46154/25)"
+
+  # Стандартне закриття, якщо не визнано винним
+  definition should_close_case_part247 = not is_guilty_art185
+  definition reason_for_closure = "Відсутність події та складу адміністративного правопорушення (п. 1 ч. 1 ст. 247 КУпАП)"
+```

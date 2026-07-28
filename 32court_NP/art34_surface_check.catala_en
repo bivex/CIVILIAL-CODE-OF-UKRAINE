@@ -1,0 +1,37 @@
+# СТАТТЯ 34 ЗАКОНУ УКРАЇНИ «ПРО НАЦІОНАЛЬНУ ПОЛІЦІЮ» — ПОВЕРХНЕВА ПЕРЕВІРКА
+
+## Нормативно-правовий зміст поверхневої перевірки
+Поверхнева перевірка як превентивний поліцейський захід є здійсненням візуального огляду особи, проведенням по поверхні вбрання особи рукою, спеціальним приладом або засобом, візуальним оглядом речі або транспортного засобу.
+
+## Підстави проведення (ч. 2 ст. 34):
+Поліцейський може здійснювати поверхневу перевірку особи, якщо існує достатньо підстав вважати, що особа має при собі річ, обіг якої заборонено чи обмежено або яка становить загрозу життю чи здоров’ю особи або інших осіб.
+
+## Процесуальні обмеження (ч. 3 ст. 34):
+Поверхнева перевірка здійснюється поліцейським **відповідної статі**. У невтратних / невідкладних випадках перевірку може здійснити поліцейський іншої статі лише з використанням спеціального приладу або засобу.
+
+```catala
+declaration structure SurfaceCheckDetails:
+  data reasonable_suspicion_of_prohibited_items content boolean
+  data threat_to_life_or_health content boolean
+  data officer_gender_matches_person content boolean
+  data used_special_device_or_tool content boolean
+  data is_urgent_case content boolean
+
+declaration scope SurfaceCheckLegalityCheck:
+  input check_info content SurfaceCheckDetails
+  output is_check_grounded content boolean
+  output is_gender_procedure_valid content boolean
+  output is_surface_check_lawful content boolean
+
+scope SurfaceCheckLegalityCheck:
+  definition is_check_grounded =
+    check_info.reasonable_suspicion_of_prohibited_items or
+    check_info.threat_to_life_or_health
+
+  definition is_gender_procedure_valid =
+    check_info.officer_gender_matches_person or
+    (check_info.is_urgent_case and check_info.used_special_device_or_tool)
+
+  definition is_surface_check_lawful =
+    is_check_grounded and is_gender_procedure_valid
+```
