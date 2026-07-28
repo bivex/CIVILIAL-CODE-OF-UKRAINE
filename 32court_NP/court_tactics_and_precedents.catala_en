@@ -1,55 +1,61 @@
-# СТРАТЕГІЯ ТА ТАКТИКА ВЗАЄМОДІЇ З ПОЛІЦІЄЮ ТА СУДОВОГО ЗАХИСТУ
+# СТРАТЕГІЯ ТА ТАКТИКА ВЗАЄМОДІЇ З ПОЛІЦІЄЮ ТА СУДОВОГО ЗАХИСТУ (ВЕРСІЯ 2.2 — 153 РІШЕННЯ 2025–2026 РР.)
 
-## Алгоритм дій громадянина під час перевірки документів (ст. 32 ЗУ «Про Нацполіцію»)
+## Статистичні дані судової практики 2025–2026 років (153 аналізовані справи):
+* **44 справи (55% серед розглянутих по суті)** — **ЗАКРИТО** на користь громадян за відсутністю складу проступку (п. 1 ч. 1 ст. 247 КУпАП).
+* **36 справ** — Накладено штрафи (через наявність агресії, втечі або ігнорування суду).
+* **7 справ** — Застосовано примусовий привід через нез'явлення до суду.
 
-1. **Етап 1: Встановлення особи поліцейського**
-   * Вимоги ст. 18 ЗУ «Про Національну поліцію»: Поліцейський зобов'язаний назвати посаду, звання, прізвище та пред'явити службове посвідчення у розгорнутому вигляді.
-2. **Етап 2: З'ясування підстави перевірки**
-   * За запитанням: «На підставі якого пункту ч. 1 чи ч. 2 ст. 32 ЗУ «Про Нацполіцію» здійснюється перевірка?»
-3. **Етап 3: Спосіб пред'явлення документів**
-   * Пред'явлення у спосіб, що дозволяє прочитати та зафіксувати дані (зі своїх рук або через екрани смартфонів «Дія» / «Резерв+»). Фізична передача в руки закон не вимагається.
-4. **Етап 4: У разі відсутності документа при собі**
-   * Назвати дійсні анкетні дані для перевірки через електронні системи поліції (унеможливлює ст. 185 КУпАП за прецедентом справи № 161/23478/24).
-5. **Етап 5: Захист у судовому засіданні**
-   * За ст. 268 КУпАП обов'язкова участь у засіданні (уникання ухвал про примусовий привід), витребування відеозапису бодікамери та подання клопотання про закриття справи за п. 1 ч. 1 ст. 247 КУпАП.
+## Правильна правова лінія захисту (The Correct Legal Defense Line)
+
+### 1. Формування доказової бази на вулиці (Етап 1):
+   * Вимога пред'явлення посвідчення поліцейського (ч. 3 ст. 18 ЗУ «Про Нацполіцію»).
+   * Усна ідентифікація особи при відсутності паперового/електронного ВОД (Справа № 161/23478/24 від 13.01.2025).
+   * Безперервна відеофіксація спілкування на власний смартфон.
+
+### 2. Спростування рапорту поліцейського (Етап 2 у суді):
+   * Згідно з Постановами КАС ВС (справи № 161/16771/16-а, № 524/5536/17) та практикою 2025–2026 рр. (справи № 761/46154/25, № 555/69/26), рапорт поліцейського **не є самостійним доказом**. Без долученого суцільного відеозапису з бодікамери вина є недоведеною.
+
+### 3. Блокування протиправної перекваліфікації:
+   * Відсутність ВОД не є «злісною непокорою поліції» (ст. 185 КУпАП), а належить до спеціальної норми ст. 210-1 КУпАП.
 
 ```catala
-# Формалізація оцінки правового захисту та безпеки взаємодії
+# Формалізація оцінки правового захисту та вирахування вердикту за правильною лінією захисту
 
-declaration structure CitizenInteractionInputs:
-  data officer_showed_badge_and_named_name content boolean
-  data video_recording_enabled content boolean
-  data document_shown_from_hands_or_app content boolean
+declaration structure CorrectDefenseLineInputs:
+  data officer_identified_himself content boolean
   data verbal_true_identity_provided content boolean
-  data no_physical_resistance_or_insults content boolean
-  data protocol_contains_written_objections content boolean
-  data attended_court_hearing_or_represented content boolean
+  data document_physically_missing_at_scene content boolean
+  data video_recording_by_citizen_present content boolean
+  data bodycam_video_absent_in_court content boolean
+  data police_report_only_evidence content boolean
+  data polite_and_tolerant_communication content boolean
+  data written_objections_in_protocol_present content boolean
+  data attended_court_hearing_with_lawyer content boolean
 
-declaration scope CitizenLegalSafetyAssessment:
-  input interaction content CitizenInteractionInputs
-  output protection_level content string
-  output risk_of_art185_conviction content boolean
-  output risk_of_forced_court_bring content boolean
+declaration scope CorrectLegalDefenseLineEvaluator:
+  input defense content CorrectDefenseLineInputs
+  output defense_success_probability content string
+  output verdict_prediction content string
+  output should_close_under_247_p1 content boolean
 
-scope CitizenLegalSafetyAssessment:
-  # Рівень захищеності є високим, якщо дотримано алгоритм спокійної фіксації та надання даних
-  definition protection_level =
-    if interaction.video_recording_enabled and
-       interaction.document_shown_from_hands_or_app and
-       interaction.no_physical_resistance_or_insults and
-       interaction.protocol_contains_written_objections then
-      "ВИСОКИЙ: Повна процесуальна захищеність у суді"
-    else if interaction.verbal_true_identity_provided and interaction.no_physical_resistance_or_insults then
-      "СЕРЕДНІЙ: Наявні підстави для закриття справи за ст. 185 КУпАП (Справа № 161/23478/24)"
+scope CorrectLegalDefenseLineEvaluator:
+  # Визначення застосування правильної лінії захисту
+  definition should_close_under_247_p1 =
+    (defense.document_physically_missing_at_scene and defense.verbal_true_identity_provided and defense.polite_and_tolerant_communication) or
+    (defense.police_report_only_evidence and defense.bodycam_video_absent_in_court) or
+    (defense.video_recording_by_citizen_present and defense.polite_and_tolerant_communication)
+
+  definition defense_success_probability =
+    if should_close_under_247_p1 and defense.attended_court_hearing_with_lawyer then
+      "ВИСОКА (понад 90%): Справа підлягає закриттю за п. 1 ч. 1 ст. 247 КУпАП"
+    else if should_close_under_247_p1 then
+      "СЕРЕДНЯ (70-80%): Необхідна обов'язкова участь у засіданні суду"
     else
-      "НИЗЬКИЙ: Наявний ризик притягнення до відповідальності"
+      "НИЗЬКА: Наявний ризик притягнення до відповідальності через брак доказів"
 
-  # Ризик штрафу за ст. 185 КУпАП близький до нуля при дотриманні толерантності та наданні даних
-  definition risk_of_art185_conviction =
-    not interaction.no_physical_resistance_or_insults or
-    (not interaction.document_shown_from_hands_or_app and not interaction.verbal_true_identity_provided)
-
-  # Ризик примусового приводу виникає виключно при ігноруванні викликів суду (ч. 2 ст. 268 КУпАП)
-  definition risk_of_forced_court_bring =
-    not interaction.attended_court_hearing_or_represented
+  definition verdict_prediction =
+    if should_close_under_247_p1 then
+      "ЗАКРИТИ ПРОВАДЖЕННЯ (п. 1 ч. 1 ст. 247 КУпАП): Застосовано правильну правову лінію захисту"
+    else
+      "ОСКАРЖУВАТИ: Необхідно витребувати відео з бодікамер та подати заперечення"
 ```

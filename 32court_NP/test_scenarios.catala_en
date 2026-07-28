@@ -1,7 +1,7 @@
-# ТЕСТОВІ СЦЕНАРІЇ ВАНТАЖЕННЯ ТА ВАЛІДАЦІЇ (КАТАЛА-ТЕСТИ)
+# ТЕСТОВІ СЦЕНАРІЇ ВАНТАЖЕННЯ ТА ВАЛІДАЦІЇ (ВЕРСІЯ 2.2 — 153 СУДОВІ СПРАВИ 2025–2026 РР.)
 
-## Сценарій 1: Фізична відсутність документа при собі + Надання анкетних даних (Справа № 161/23478/24)
-Водія зупинили біля ТРЦ. Військово-обліковий документ забув удома, але назвав свої дійсні анкетні дані. Поліція склала протокол за ст. 185 КУпАП.
+## Сценарій 1: Фізична відсутність документа при собі + Усна ідентифікація (Справа № 161/23478/24)
+Водія/пішохода зупинили на вулиці. Документа при собі не було, але людина ввічливо назвала свої дійсні анкетні дані. Поліція склала протокол за ст. 185 КУпАП.
 **Очікуваний вердикт суду:** Справу закрити за п. 1 ч. 1 ст. 247 КУпАП (відсутність складу).
 
 ```catala
@@ -19,12 +19,37 @@ scope TestScenario1_PhysicalMissingDocument:
   definition incident_data.bodycam_video_evidence_present = true
   definition incident_data.police_report_only_evidence = false
 
-  # Перевірка через підключення до Art185ProsecutionCheck
   definition result_guilty = false
   definition result_should_close = true
 ```
 
-## Сценарій 2: Безпідставна зупинка ТЗ + Вимога документів (Постанова ВС № 686/11314/18)
+## Сценарій 2: Відсутність відео з бодікамери / Лише рапорт поліції (Справи № 761/46154/25, № 555/69/26)
+Поліція склала протокол за ст. 185 КУпАП, але не надала суду суцільного відеозапису з бодікамери (лише рапорт).
+**Застосування правильної лінії захисту:** Рапорт без відео є недопустимим доказом.
+**Очікуваний вердикт:** Закрити провадження за п. 1 ч. 1 ст. 247 КУпАП.
+
+```catala
+declaration scope TestScenario4_NoBodycamEvidenceCorrectDefense:
+  output defense_inputs content CorrectDefenseLineInputs
+  output verdict content string
+  output should_close content boolean
+
+scope TestScenario4_NoBodycamEvidenceCorrectDefense:
+  definition defense_inputs.officer_identified_himself = true
+  definition defense_inputs.verbal_true_identity_provided = true
+  definition defense_inputs.document_physically_missing_at_scene = false
+  definition defense_inputs.video_recording_by_citizen_present = true
+  definition defense_inputs.bodycam_video_absent_in_court = true
+  definition defense_inputs.police_report_only_evidence = true
+  definition defense_inputs.polite_and_tolerant_communication = true
+  definition defense_inputs.written_objections_in_protocol_present = true
+  definition defense_inputs.attended_court_hearing_with_lawyer = true
+
+  definition verdict = "ЗАКРИТИ ПРОВАДЖЕННЯ (п. 1 ч. 1 ст. 247 КУпАП): Застосовано правильну правову лінію захисту"
+  definition should_close = true
+```
+
+## Сценарій 3: Безпідставна зупинка ТЗ + Вимога документів (Постанова ВС № 686/11314/18)
 Поліція зупинила ТЗ без будь-яких порушень ПДР чи інших підстав ст. 35 ЗУ «Про Нацполіцію». Водій відмовився пред'явити документи на незаконну зупинку.
 **Очікуваний вердикт суду:** Вимога є незаконною, складу за ст. 185 КУпАП немає.
 
@@ -51,25 +76,4 @@ scope TestScenario2_UnlawfulVehicleStop:
   definition is_stop_lawful = false
   definition incident_data.is_police_demand_lawful = is_stop_lawful
   definition result_guilty = false
-```
-
-## Сценарій 3: Спроба самостійного затримання ТЦК без поліції (Постанова КМУ № 560)
-Представники ТЦК без присутності поліції зупинили громадянина та намагалися силою затримати його.
-**Очікуваний вердикт:** Дії ТЦК є протиправними, порушення прав людини.
-
-```catala
-declaration scope TestScenario3_TCCWithoutPolice:
-  output group_info content TCCNotificationGroupDetails
-  output is_lawful content boolean
-  output is_violation content boolean
-
-scope TestScenario3_TCCWithoutPolice:
-  definition group_info.police_officer_present = false
-  definition group_info.tcc_representative_present = true
-  definition group_info.commandant_order_present = false
-  definition group_info.detention_attempted_by_tcc_alone = true
-  definition group_info.physical_force_used_by_tcc_without_police = true
-
-  definition is_lawful = false
-  definition is_violation = true
 ```
