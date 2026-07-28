@@ -1,0 +1,113 @@
+# ГЛАВА 14 КУпАП — АДМІНІСТРАТИВНІ ПРАВОПОРУШЕННЯ, ЩО ПОСЯГАЮТЬ НА ГРОМАДСЬКИЙ ПОРЯДОК І ГРОМАДСЬКУ БЕЗПЕКУ
+
+## Повний текст статей 173 – 173-8 КУпАП
+
+### Стаття 173. Дрібне хуліганство
+Дрібне хуліганство, тобто нецензурна лайка в громадських місцях, образливе чіпляння до громадян та інші подібні дії, що порушують громадський порядок і спокій громадян —
+тягне за собою накладення штрафу від **3 до 7 нмдг** (51–119 грн) або громадські роботи від **40 до 60 годин**, або виправні роботи від **1 до 2 місяців** з відрахуванням 20 % заробітку, або адміністративний арешт на строк **до 15 діб**.
+
+### Стаття 173-1. Поширювання неправдивих чуток
+Поширювання неправдивих чуток, що можуть викликати паніку серед населення або порушення громадського порядку —
+тягне за собою накладення штрафу від **10 до 15 нмдг** або виправні роботи на строк **до 1 місяця**.
+
+### Стаття 173-2. Вчинення домашнього насильства
+1. Вчинення домашнього насильства: штраф від **20 до 40 нмдг** або громадські роботи 30–40 год, або адмінарешт **до 10 діб**.
+2. Стосовно малолітньої/неповнолітньої особи: штраф від **30 до 60 нмдг** або громадські роботи 40–50 год, або адмінарешт від **2 до 10 діб**.
+3. Повторно протягом року: штраф від **60 до 80 нмдг** або громадські роботи 40–60 год, або адмінарешт від **3 до 15 діб**.
+
+### Стаття 173-3. Виготовлення та пропаганда георгіївської (гвардійської) стрічки
+1. Публічне використання, демонстрація чи носіння: штраф від **50 до 150 нмдг** з конфіскацією стрічки.
+2. Повторно протягом року чи виготовлення/поширення: штраф від **150 до 300 нмдг** або адмінарешт **до 15 діб** з конфіскацією.
+
+### Стаття 173-4. Булінг (цькування) учасника освітнього процесу
+1. Булінг: штраф від **50 до 100 нмдг** або громадські роботи 20–40 год.
+2. Вчинений групою осіб або повторно: штраф від **100 до 200 нмдг** або громадські роботи 40–60 год.
+3. Неповідомлення керівником закладу освіти: штраф від **50 до 100 нмдг** або виправні роботи до 1 місяця.
+
+### Стаття 173-5. Мобінг (цькування) працівника
+1. Вчинення мобінгу: на громадян штраф від **50 до 100 нмдг** (або громадські роботи 20–30 год), на ФОП/посадових осіб від **100 до 200 нмдг** (або громадські роботи 30–40 год).
+2. Повторно або групою осіб: на громадян від **100 до 200 нмдг**, на ФОП/посадових осіб від **200 до 400 нмдг**.
+
+### Стаття 173-6. Вчинення насильства за ознакою статі
+1. Насильство за ознакою статі: штраф від **100 до 200 нмдг** або громадські роботи 20–40 год, або виправні роботи до 1 місяця.
+2. Повторно протягом року: штраф від **200 до 300 нмдг** або громадські роботи 40–60 год, або виправні роботи 1–2 місяці, або адмінарешт **до 10 діб**.
+
+### Стаття 173-7. Сексуальне домагання
+1. Сексуальне домагання (образливі, принизливі дії сексуального характеру): штраф від **80 до 160 нмдг** або громадські роботи 20–40 год, або виправні роботи до 1 місяця.
+2. Повторно або щодо залежної особи: штраф від **160 до 280 нмдг** або громадські роботи 40–60 год, або виправні роботи 1–2 місяці, або адмінарешт **до 15 діб**.
+
+### Стаття 173-8. Невиконання термінового заборонного припису
+1. Неповідомлення поліції про місце перебування: попередження або штраф від **10 до 20 нмдг**.
+2. Невиконання термінового заборонного припису: штраф від **20 до 30 нмдг** або громадські роботи 30–40 год, або адмінарешт **до 10 діб**.
+3. Повторно протягом року: штраф від **30 до 40 нмдг** або громадські роботи 40–60 год, або адмінарешт **до 15 діб**.
+
+```catala
+# Формалізація штрафів та санкцій Глави 14 КУпАП (ст. 173 - 173-8)
+
+declaration structure PublicOrderArticleDetails:
+  data target_article content string # "173", "173-1", "173-2", "173-3", "173-4", "173-5", "173-6", "173-7", "173-8"
+  data part_number content integer # 1, 2, 3, 4, 5
+  data is_repeat_offense content boolean
+  data is_group_offense content boolean
+  data is_official_or_fop content boolean
+  data victim_is_minor content boolean
+  data nmdg_value content money
+
+declaration scope Chapter14PenaltiesCalculation:
+  input input_data content PublicOrderArticleDetails
+  output min_fine_nmdg content integer
+  output max_fine_nmdg content integer
+  output min_fine_money content money
+  output max_fine_money content money
+  output max_admin_arrest_days content integer
+  output max_community_service_hours content integer
+
+scope Chapter14PenaltiesCalculation:
+  let nmdg = input_data.nmdg_value
+
+  definition min_fine_nmdg =
+    if input_data.target_article = "173" then 3
+    else if input_data.target_article = "173-1" then 10
+    else if input_data.target_article = "173-2" then (if input_data.is_repeat_offense then 60 else (if input_data.victim_is_minor then 30 else 20))
+    else if input_data.target_article = "173-3" then (if input_data.is_repeat_offense then 150 else 50)
+    else if input_data.target_article = "173-4" then (if input_data.is_repeat_offense or input_data.is_group_offense then 100 else 50)
+    else if input_data.target_article = "173-5" then (if input_data.is_official_or_fop then (if input_data.is_repeat_offense then 200 else 100) else (if input_data.is_repeat_offense then 100 else 50))
+    else if input_data.target_article = "173-6" then (if input_data.is_repeat_offense then 200 else 100)
+    else if input_data.target_article = "173-7" then (if input_data.is_repeat_offense then 160 else 80)
+    else if input_data.target_article = "173-8" then (if input_data.part_number = 1 then 10 else (if input_data.is_repeat_offense then 30 else 20))
+    else 0
+
+  definition max_fine_nmdg =
+    if input_data.target_article = "173" then 7
+    else if input_data.target_article = "173-1" then 15
+    else if input_data.target_article = "173-2" then (if input_data.is_repeat_offense then 80 else (if input_data.victim_is_minor then 60 else 40))
+    else if input_data.target_article = "173-3" then (if input_data.is_repeat_offense then 300 else 150)
+    else if input_data.target_article = "173-4" then (if input_data.is_repeat_offense or input_data.is_group_offense then 200 else 100)
+    else if input_data.target_article = "173-5" then (if input_data.is_official_or_fop then (if input_data.is_repeat_offense then 400 else 200) else (if input_data.is_repeat_offense then 200 else 100))
+    else if input_data.target_article = "173-6" then (if input_data.is_repeat_offense then 300 else 200)
+    else if input_data.target_article = "173-7" then (if input_data.is_repeat_offense then 280 else 160)
+    else if input_data.target_article = "173-8" then (if input_data.part_number = 1 then 20 else (if input_data.is_repeat_offense then 40 else 30))
+    else 0
+
+  definition min_fine_money = nmdg * min_fine_nmdg
+  definition max_fine_money = nmdg * max_fine_nmdg
+
+  definition max_admin_arrest_days =
+    if input_data.target_article = "173" then 15
+    else if input_data.target_article = "173-2" then (if input_data.is_repeat_offense then 15 else 10)
+    else if input_data.target_article = "173-3" and input_data.is_repeat_offense then 15
+    else if input_data.target_article = "173-6" and input_data.is_repeat_offense then 10
+    else if input_data.target_article = "173-7" and input_data.is_repeat_offense then 15
+    else if input_data.target_article = "173-8" then (if input_data.is_repeat_offense then 15 else 10)
+    else 0
+
+  definition max_community_service_hours =
+    if input_data.target_article = "173" then 60
+    else if input_data.target_article = "173-2" then 60
+    else if input_data.target_article = "173-4" then 60
+    else if input_data.target_article = "173-5" then 60
+    else if input_data.target_article = "173-6" then 60
+    else if input_data.target_article = "173-7" then 60
+    else if input_data.target_article = "173-8" then 60
+    else 0
+```
